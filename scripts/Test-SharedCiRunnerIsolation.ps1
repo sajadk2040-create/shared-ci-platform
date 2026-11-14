@@ -8,6 +8,7 @@ $ErrorActionPreference = 'Stop'
 if ($env:OS -ne 'Windows_NT') { throw 'This audit is Windows-only.' }
 if (-not [Environment]::Is64BitProcess) { throw 'Run with 64-bit PowerShell 7.' }
 Import-Module Microsoft.PowerShell.LocalAccounts -ErrorAction Stop
+. (Join-Path $PSScriptRoot 'SharedCiAclRules.ps1')
 $root = [IO.DirectoryInfo]::new($RunnerRoot).FullName
 if (-not (Test-Path -LiteralPath $root -PathType Container)) { throw "RunnerRoot does not exist: $root" }
 $current = $root
@@ -35,24 +36,25 @@ $isAdministrator = @($adminMembers | Where-Object {
 $acl = Get-Acl -LiteralPath $root
 $rules = @($acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier]))
 $expected = @($adminSid.Value, $systemSid.Value, $userSid.Value)
-$unexpected = @($rules | Where-Object {
-    $_.AccessControlType -ne [Security.AccessControl.AccessControlType]::Allow -or
-    $_.IdentityReference.Value -notin $expected -or
-    $_.FileSystemRights -ne [Security.AccessControl.FileSystemRights]::FullControl -or
-    $_.InheritanceFlags -ne ([Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [Security.AccessControl.InheritanceFlags]::ObjectInherit) -or
-    $_.PropagationFlags -ne [Security.AccessControl.PropagationFlags]::None -or
-    $_.IsInherited
+$normalizedRules = @($rules | ForEach-Object {
+    [pscustomobject]@{
+        Identity = $_.IdentityReference.Value
+        AccessControlType = $_.AccessControlType.ToString()
+        Rights = $_.FileSystemRights.ToString()
+        InheritanceFlags = $_.InheritanceFlags.ToString()
+        PropagationFlags = $_.PropagationFlags.ToString()
+        IsInherited = [bool]$_.IsInherited
+    }
 })
-$seen = @($rules | ForEach-Object { $_.IdentityReference.Value } | Sort-Object -Unique)
-$missing = @($expected | Where-Object { $_ -notin $seen })
+$aclAssessment = Get-SharedCiAclRuleAssessment -Rules $normalizedRules -ExpectedIdentities $expected
 $checks = [ordered]@{
     AccountExists = ($null -ne $user)
     AccountEnabled = [bool]$user.Enabled
     AccountIsNotAdministrator = (-not $isAdministrator)
     AclInheritanceDisabled = [bool]$acl.AreAccessRulesProtected
-    AclContainsExactlyThreeExpectedRules = ($rules.Count -eq 3 -and $unexpected.Count -eq 0 -and $missing.Count -eq 0)
-    UnexpectedAclRuleCount = $unexpected.Count
-    MissingAclPrincipalCount = $missing.Count
+    AclContainsExactlyThreeExpectedRules = [bool]$aclAssessment.IsValid
+    UnexpectedAclRuleCount = $aclAssessment.UnexpectedRuleCount
+    MissingAclPrincipalCount = $aclAssessment.MissingPrincipalCount
 }
 $failed = @($checks.GetEnumerator() | Where-Object { $_.Key -in @('AccountExists','AccountEnabled','AccountIsNotAdministrator','AclInheritanceDisabled','AclContainsExactlyThreeExpectedRules') -and -not [bool]$_.Value })
 $result = [ordered]@{
