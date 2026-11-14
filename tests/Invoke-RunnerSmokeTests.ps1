@@ -32,12 +32,20 @@ $helperPath = Join-Path $projectRoot "probe.ps1"
 param(
   [string]$CapturePath,
   [int]$ExitCode = 0,
+  [int]$SleepSeconds = 0,
+  [string]$ChildPidPath,
+  [string]$ChildExecutable,
   [Parameter(ValueFromRemainingArguments = $true)]
   [string[]]$ProbeArguments
 )
 [pscustomobject]@{ arguments = @($ProbeArguments) } |
   ConvertTo-Json -Depth 4 |
   Set-Content -LiteralPath $CapturePath -Encoding utf8
+if ($ChildPidPath) {
+  $child = Start-Process -FilePath $ChildExecutable -ArgumentList @("-NoProfile", "-Command", "Start-Sleep -Seconds 60") -PassThru -WindowStyle Hidden
+  Set-Content -LiteralPath $ChildPidPath -Value $child.Id
+}
+if ($SleepSeconds -gt 0) { Start-Sleep -Seconds $SleepSeconds }
 Write-Output "probe-stdout"
 [Console]::Error.WriteLine("probe-stderr")
 exit $ExitCode
@@ -179,7 +187,61 @@ try {
   Assert-True ($invalidConfigExit -ne 0) "unsupported schema version must be rejected"
   Assert-True (-not (Test-Path -LiteralPath $invalidMarker)) "invalid config must be rejected before executing steps"
 
-  Write-Host "PASS: runner smoke tests (6 groups; junction test runs on Windows)"
+  # Test 7: timeout terminates the child process and its descendant tree.
+  $timeoutConfig = Join-Path $projectRoot "timeout.json"
+  $childPidPath = Join-Path $projectRoot "timeout-child.pid"
+  Write-Config $timeoutConfig ([pscustomobject]@{
+    schemaVersion = 1
+    project = @{ name = "shared-ci-smoke-timeout"; reportDirectory = "artifacts/timeout" }
+    steps = @(@{
+      name = "timeout-with-descendant"
+      command = $pwshPath
+      timeoutSeconds = 2
+      args = @("-NoProfile", "-File", $helperPath, "-CapturePath", (Join-Path $projectRoot "timeout-capture.json"), "-ChildPidPath", $childPidPath, "-ChildExecutable", $pwshPath, "-SleepSeconds", "30")
+    })
+  })
+  Push-Location $projectRoot
+  try {
+    & $pwshPath -NoProfile -File (Join-Path $platformRoot "scripts/run.ps1") -ConfigPath "timeout.json"
+    $timeoutRunnerExit = $LASTEXITCODE
+  } finally { Pop-Location }
+  Assert-True ($timeoutRunnerExit -eq 1) "timed-out step should fail the runner"
+  $timeoutJson = Get-ChildItem -LiteralPath (Join-Path $projectRoot "artifacts/timeout") -Filter "*.json" | Select-Object -First 1
+  $timeoutReport = Get-Content -LiteralPath $timeoutJson.FullName -Raw | ConvertFrom-Json
+  Assert-True ($timeoutReport.steps[0].timedOut -eq $true) "timeout must be recorded in JSON report"
+  Assert-True ($timeoutReport.steps[0].exitCode -eq 124) "timeout should use exit code 124"
+  Assert-True ($timeoutReport.steps[0].timeoutSeconds -eq 2) "configured timeout should be reported"
+  $childPid = [int](Get-Content -LiteralPath $childPidPath -Raw)
+  Start-Sleep -Milliseconds 500
+  Assert-True ($null -eq (Get-Process -Id $childPid -ErrorAction SilentlyContinue)) "timed-out process tree must not leave its child running"
+
+  # Test 8: parallel runs in one report directory must not overwrite each other.
+  $parallelConfig = Join-Path $projectRoot "parallel.json"
+  Write-Config $parallelConfig ([pscustomobject]@{
+    schemaVersion = 1
+    project = @{ name = "shared-ci-smoke-parallel"; reportDirectory = "artifacts/parallel" }
+    steps = @(@{
+      name = "parallel-probe"
+      command = $pwshPath
+      args = @("-NoProfile", "-File", $helperPath, "-CapturePath", (Join-Path $projectRoot "parallel-capture.json"), "-SleepSeconds", "2")
+    })
+  })
+  $runnerPath = Join-Path $platformRoot "scripts/run.ps1"
+  $parallelOne = Start-Process -FilePath $pwshPath -ArgumentList @("-NoProfile", "-File", $runnerPath, "-ConfigPath", "parallel.json") -WorkingDirectory $projectRoot -PassThru -WindowStyle Hidden
+  $parallelTwo = Start-Process -FilePath $pwshPath -ArgumentList @("-NoProfile", "-File", $runnerPath, "-ConfigPath", "parallel.json") -WorkingDirectory $projectRoot -PassThru -WindowStyle Hidden
+  $parallelOne.WaitForExit()
+  $parallelTwo.WaitForExit()
+  Assert-True ($parallelOne.ExitCode -eq 0 -and $parallelTwo.ExitCode -eq 0) "both parallel runner processes should pass"
+  $parallelReports = Join-Path $projectRoot "artifacts/parallel"
+  $parallelJson = @(Get-ChildItem -LiteralPath $parallelReports -Filter "*.json")
+  Assert-True ($parallelJson.Count -eq 2) "parallel runs must produce two JSON reports"
+  $parallelIds = @($parallelJson | ForEach-Object { (Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json).runId } | Select-Object -Unique)
+  Assert-True ($parallelIds.Count -eq 2) "parallel run identifiers must be unique"
+  foreach ($extension in @("md", "log", "out", "err")) {
+    Assert-True (@(Get-ChildItem -LiteralPath $parallelReports -Filter "*.$extension").Count -eq 2) "parallel runs must preserve both .$extension artifacts"
+  }
+
+  Write-Host "PASS: runner smoke tests (8 groups; includes timeout tree termination and parallel report isolation)"
   Write-Host "Temporary test workspace: $testRoot"
   $testPassed = $true
 }
