@@ -66,6 +66,14 @@ foreach ($candidate in @($config.steps)) {
   if ($null -ne $candidate.continueOnError -and $candidate.continueOnError -isnot [bool]) {
     throw "Step '$($candidate.name)' continueOnError must be a boolean."
   }
+  if ($null -ne $candidate.timeoutSeconds) {
+    if ($candidate.timeoutSeconds -isnot [int] -and $candidate.timeoutSeconds -isnot [long]) {
+      throw "Step '$($candidate.name)' timeoutSeconds must be an integer."
+    }
+    if ([long]$candidate.timeoutSeconds -lt 1 -or [long]$candidate.timeoutSeconds -gt 86400) {
+      throw "Step '$($candidate.name)' timeoutSeconds must be between 1 and 86400."
+    }
+  }
 }
 
 if (-not $OutputDirectory) {
@@ -75,7 +83,7 @@ if (-not $OutputDirectory) {
 $outDir = Resolve-ProjectPath $OutputDirectory "Report output"
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
-$runId = Get-Date -Format "yyyyMMdd-HHmmss"
+$runId = (Get-Date -Format "yyyyMMdd-HHmmss-fff") + "-" + [guid]::NewGuid().ToString("N").Substring(0, 8)
 $logPath = Join-Path $outDir "$runId.log"
 $jsonPath = Join-Path $outDir "$runId.json"
 $mdPath = Join-Path $outDir "$runId.md"
@@ -112,17 +120,38 @@ foreach ($step in $config.steps) {
 
     $process = [System.Diagnostics.Process]::new()
     $process.StartInfo = $startInfo
-    if (-not $process.Start()) { throw "Process could not be started." }
-    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
-    $stderrTask = $process.StandardError.ReadToEndAsync()
-    $process.WaitForExit()
-    [System.IO.File]::WriteAllText($stdoutFile, $stdoutTask.GetAwaiter().GetResult())
-    [System.IO.File]::WriteAllText($stderrFile, $stderrTask.GetAwaiter().GetResult())
-    $exitCode = $process.ExitCode
-    $process.Dispose()
+    $timedOut = $false
+    try {
+      if (-not $process.Start()) { throw "Process could not be started." }
+      $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+      $stderrTask = $process.StandardError.ReadToEndAsync()
+      if ($null -ne $step.timeoutSeconds) {
+        $timeoutMilliseconds = [int]([long]$step.timeoutSeconds * 1000)
+        if (-not $process.WaitForExit($timeoutMilliseconds)) {
+          $timedOut = $true
+          try {
+            # Kill the entire descendant tree so a timed-out command cannot
+            # leave child processes running in the background.
+            $process.Kill($true)
+          } catch {
+            # The process may have exited between the timeout check and Kill.
+            if (-not $process.HasExited) { throw }
+          }
+          $process.WaitForExit()
+        }
+      } else {
+        $process.WaitForExit()
+      }
+      [System.IO.File]::WriteAllText($stdoutFile, $stdoutTask.GetAwaiter().GetResult())
+      [System.IO.File]::WriteAllText($stderrFile, $stderrTask.GetAwaiter().GetResult())
+      $exitCode = if ($timedOut) { 124 } else { $process.ExitCode }
+    } finally {
+      $process.Dispose()
+    }
   } catch {
     $_ | Out-String | Add-Content -LiteralPath $stderrFile
     $exitCode = 9009
+    if ($null -eq $timedOut) { $timedOut = $false }
   }
 
   $ended = Get-Date
@@ -133,6 +162,8 @@ foreach ($step in $config.steps) {
     name = [string]$step.name
     command = [string]$step.command
     argumentCount = [int]$argsList.Count
+    timeoutSeconds = if ($null -ne $step.timeoutSeconds) { [int]$step.timeoutSeconds } else { $null }
+    timedOut = [bool]$timedOut
     workingDirectory = [string]$stepDir
     exitCode = [int]$exitCode
     status = if ($success) { "passed" } else { "failed" }
