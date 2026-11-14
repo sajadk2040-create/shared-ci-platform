@@ -32,7 +32,7 @@ With PowerShell 7 installed, run the self-contained harness from the repository 
 pwsh -NoProfile -File tests/Invoke-RunnerSmokeTests.ps1
 ```
 
-It provisions a temporary isolated project and checks successful execution/reporting, stdout and stderr capture, preservation of arguments with spaces and quotes, intentional child exit code 23, and rejection of lexical path traversal and absolute config paths. The harness has been committed but is not yet runtime-validated. It does not cover symlink/reparse-point traversal.
+It provisions a temporary isolated project and checks successful execution/reporting, stdout and stderr capture, preservation of arguments with spaces and quotes, intentional child exit code 23, and rejection of lexical path traversal and absolute config paths. The harness has been committed but is not yet runtime-validated. Its Windows-only junction case checks a common reparse-point escape path.
 
 ## Smoke fixture
 
