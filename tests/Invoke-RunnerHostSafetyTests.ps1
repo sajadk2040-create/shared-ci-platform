@@ -79,6 +79,10 @@ try {
     Assert-True ($auditSource.Contains('$next = $parent.FullName')) 'ancestor traversal must preserve the volume-root path'
     Assert-True (-not $auditSource.Contains('$parent.FullName.TrimEnd')) 'ancestor traversal must not convert a volume root such as C:\\ into a drive-relative path'
     . $aclHelper
+    $parentAssessment = Get-SharedCiParentAclAssessment -Path $testRoot
+    Assert-True ($parentAssessment.IsSafe) 'temporary test path ancestors should pass read-only parent ACL/reparse preflight'
+    Assert-True ($parentAssessment.CheckedAncestors.Count -gt 0) 'parent ACL assessment must inventory existing ancestors'
+    Assert-True ($parentAssessment.InspectionErrors.Count -eq 0) 'parent ACL assessment must report no inspection errors for accessible test ancestors'
     $normalAttributes = [IO.FileAttributes]::Directory
     $reparseAttributes = [IO.FileAttributes]::Directory -bor [IO.FileAttributes]::ReparsePoint
     Assert-True (-not (Test-SharedCiReparsePointAttributes -Attributes $normalAttributes)) 'ordinary directory attributes must not be classified as reparse points'
@@ -124,6 +128,10 @@ try {
     Assert-True ($source.Contains('Import-Module Microsoft.PowerShell.LocalAccounts -ErrorAction Stop')) 'Apply mode must explicitly load LocalAccounts module'
     Assert-True ($source.Contains('[Environment]::Is64BitProcess')) 'Apply mode must reject 32-bit PowerShell'
     Assert-True ($source.Contains('SetAccessRuleProtection($true, $false)')) 'directory ACL inheritance must be protected'
+    Assert-True ($source.Contains("Get-SharedCiParentAclAssessment -Path $parentPath")) 'provisioning must inspect the parent path and existing ancestors before Apply'
+    Assert-True ($source.Contains('ParentAclAssessment = $parentAclAssessment')) 'plan output must include the parent ACL assessment'
+    Assert-True ($source.Contains('if (-not $parentAclAssessment.IsSafe)')) 'Apply mode must fail closed when parent ACL assessment is unsafe'
+    Assert-True ($source.Contains("SharedCiAclRules.ps1")) 'provisioning must load the shared ACL helper'
     Assert-True (-not $source.Contains('ConvertFrom-SecureString')) 'password must not be serialized by the script'
     Assert-True (-not $source.Contains('ConvertTo-SecureString')) 'password must not be reconstructed from persisted text'
     Assert-True (-not $source.Contains('config.cmd')) 'provisioning must not register a runner'
