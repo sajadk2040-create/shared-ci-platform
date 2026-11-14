@@ -26,7 +26,7 @@ The core harness exercises child-process execution, report generation, stdout/st
 pwsh -NoProfile -File tests/Invoke-RunnerHostSafetyTests.ps1
 ```
 
-This non-provisioning harness validates parser syntax, runner metadata handling, credential-content non-disclosure, provisioning plan-only behavior, ACL assessment cases, isolation-audit source guards and static provisioning safety checks. It does not create accounts, set passwords, mutate ACLs, register runners or install services.
+This non-provisioning harness validates parser syntax for the host scripts and opt-in link integration script, runner metadata handling, credential-content non-disclosure, provisioning plan-only behavior, ACL assessment cases, isolation-audit source guards and static provisioning safety checks. It does not create accounts, set passwords, mutate ACLs, register runners or install services.
 
 ## Real Windows filesystem-link integration
 
