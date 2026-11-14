@@ -1,0 +1,15 @@
+{
+  "product": "Shared CI Platform",
+  "packageName": "shared-ci-platform",
+  "version": "0.1.0",
+  "configSchemaVersion": 1,
+  "runtime": {
+    "name": "PowerShell",
+    "minimumMajorVersion": 7,
+    "operatingSystem": "Windows"
+  },
+  "entrypoint": "scripts/run.ps1",
+  "sourceStagingPath": "tooling/shared-ci",
+  "intendedRepository": "sajadk2040-create/shared-ci-platform",
+  "releaseStatus": "bootstrap-not-yet-runtime-validated"
+}
