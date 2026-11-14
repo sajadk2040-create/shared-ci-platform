@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "name": "shared-ci-smoke-project",
+    "reportDirectory": "artifacts/ci"
+  },
+  "steps": [
+    {
+      "name": "Smoke success",
+      "command": "pwsh",
+      "args": ["-NoProfile", "-File", "checks/pass.ps1"],
+      "workingDirectory": "."
+    }
+  ]
+}
