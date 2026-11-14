@@ -35,6 +35,7 @@ The runner does not install dependencies or access the network unless an explici
 
 - [Consumer starter template](examples/consumer-template/README.md) — copy-ready config, smoke script and manual-only workflow example.
 - [Project adoption guide](docs/PROJECT-ADOPTION.md)
+- [Consumer template validation](docs/CONSUMER-TEMPLATE-TESTS.md)
 - [Adapter contract](docs/ADAPTER-CONTRACT.md)
 - [Standalone import and validation status](docs/PORTING-STATUS.md)
 - [Standalone bootstrap and release gates](docs/REPOSITORY-BOOTSTRAP.md)
