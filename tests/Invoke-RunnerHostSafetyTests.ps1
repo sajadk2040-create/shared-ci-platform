@@ -5,7 +5,8 @@ $ErrorActionPreference = 'Stop'
 $pwsh = (Get-Command pwsh -ErrorAction Stop).Source
 $preflight = Join-Path $RepositoryRoot 'scripts/Test-RunnerHostReadiness.ps1'
 $provision = Join-Path $RepositoryRoot 'scripts/Prepare-SharedCiRunnerHost.ps1'
-foreach ($path in @($preflight, $provision)) {
+$audit = Join-Path $RepositoryRoot 'scripts/Test-SharedCiRunnerIsolation.ps1'
+foreach ($path in @($preflight, $provision, $audit)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Required script missing: $path" }
     $tokens = $null; $errors = $null
     [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors) | Out-Null
@@ -66,6 +67,11 @@ try {
     Assert-True ($badPath.ExitCode -ne 0) 'non-approved path layout must be rejected'
     Assert-True (-not (Test-Path -LiteralPath $target)) 'rejected inputs must not create runner directory'
     Write-Host 'PASS: provisioning plan-only non-mutation and invalid-input rejection'
+
+    $auditSource = Get-Content -LiteralPath $audit -Raw
+    Assert-True ($auditSource.Contains('[IO.FileAttributes]::ReparsePoint')) 'isolation audit must reject a reparse-point runner root'
+    Assert-True ($auditSource.Contains('must not be a reparse point')) 'reparse-point rejection must fail with an explicit explanation'
+    Write-Host 'PASS: isolation audit parser and reparse-point safety guard'
 
     $source = Get-Content -LiteralPath $provision -Raw
     Assert-True ($source.Contains('Read-Host') -and $source.Contains('-AsSecureString')) 'password must be requested as SecureString'
