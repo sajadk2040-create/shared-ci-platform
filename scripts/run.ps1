@@ -119,10 +119,12 @@ foreach ($step in $config.steps) {
     foreach ($argument in $argsList) { [void]$startInfo.ArgumentList.Add($argument) }
 
     $process = [System.Diagnostics.Process]::new()
-    $process.StartInfo = $startInfo
     $timedOut = $false
+    $processStarted = $false
     try {
+      $process.StartInfo = $startInfo
       if (-not $process.Start()) { throw "Process could not be started." }
+      $processStarted = $true
       $stdoutTask = $process.StandardOutput.ReadToEndAsync()
       $stderrTask = $process.StandardError.ReadToEndAsync()
       if ($null -ne $step.timeoutSeconds) {
@@ -146,6 +148,18 @@ foreach ($step in $config.steps) {
       [System.IO.File]::WriteAllText($stderrFile, $stderrTask.GetAwaiter().GetResult())
       $exitCode = if ($timedOut) { 124 } else { $process.ExitCode }
     } finally {
+      # If setup, waiting or stream collection fails after Start(), do not
+      # leave the launched process tree running in the background.
+      if ($processStarted) {
+        try {
+          if (-not $process.HasExited) {
+            $process.Kill($true)
+            $process.WaitForExit()
+          }
+        } catch {
+          "Process cleanup warning: $($_.Exception.Message)" | Add-Content -LiteralPath $stderrFile
+        }
+      }
       $process.Dispose()
     }
   } catch {
