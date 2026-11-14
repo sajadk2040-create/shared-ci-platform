@@ -59,14 +59,17 @@ The static test validates parser safety, task allowlisting, 64-bit PowerShell re
 
 ## Validation checkpoint (2026-11-14)
 
-Independently verified GitHub response files report:
+Independently verified GitHub response JSON files report:
 
+- `agent-response-decision-tests-010`: passed; distinguishes explicit 404 from authentication, rate-limit, server and network failures.
 - `shared-ci-agent-allowlist-012`: passed; expanded allowlist checks.
 - `shared-ci-host-safety-013`: passed; five host-safety test groups. No account, password, ACL, service or runner provisioning changes were performed.
 - `shared-ci-filesystem-links-015`: passed; actual Windows junction identified as a reparse point. Symbolic-link creation was skipped because this environment requires Administrator privilege for that operation.
 - `shared-ci-consumer-template-016`: passed; three consumer-template test groups.
 - `shared-ci-core-smoke-017`: passed; eight core smoke-test groups, including timeout tree termination and parallel report isolation.
-- `agent-response-decision-tests-010` and prior static checks: passed.
+- `shared-ci-agent-static-018`: passed; local agent static safety tests.
+
+The operator verified PowerShell 7.6.10 x64 at `C:\Program Files\PowerShell\7\pwsh.exe`. The command inbox is cleared after completion.
 
 These results validate the local test suites only. They do not constitute a security sandbox assessment, actual dedicated-runner provisioning, Windows service installation, reusable-workflow execution on a registered runner, or release approval.
 
