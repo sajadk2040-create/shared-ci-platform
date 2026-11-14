@@ -15,7 +15,7 @@ $adminSid = [Security.Principal.SecurityIdentifier]::new('S-1-5-32-544')
 $systemSid = [Security.Principal.SecurityIdentifier]::new('S-1-5-18')
 $userSid = if ($user.SID -is [Security.Principal.SecurityIdentifier]) { $user.SID } else { [Security.Principal.SecurityIdentifier]::new([string]$user.SID) }
 $adminGroup = Get-LocalGroup -SID $adminSid -ErrorAction Stop
-$adminMembers = @(Get-LocalGroupMember -Group $adminGroup -ErrorAction Stop)
+$adminMembers = @(Get-LocalGroupMember -Group $adminGroup.Name -ErrorAction Stop)
 $isAdministrator = @($adminMembers | Where-Object {
     $memberSid = if ($_.SID -is [Security.Principal.SecurityIdentifier]) { $_.SID } else { [Security.Principal.SecurityIdentifier]::new([string]$_.SID) }
     $memberSid -eq $userSid
@@ -33,7 +33,6 @@ $unexpected = @($rules | Where-Object {
 })
 $seen = @($rules | ForEach-Object { $_.IdentityReference.Value } | Sort-Object -Unique)
 $missing = @($expected | Where-Object { $_ -notin $seen })
-$aclPass = (-not $acl.AreAccessRulesProtected -eq $false) -and ($rules.Count -eq 3) -and ($unexpected.Count -eq 0) -and ($missing.Count -eq 0)
 $checks = [ordered]@{
     AccountExists = ($null -ne $user)
     AccountEnabled = [bool]$user.Enabled
