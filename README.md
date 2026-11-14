@@ -14,6 +14,7 @@ A portable command-based CI runner for local development and dedicated self-host
 - Timestamped JSON, Markdown, stdout/stderr and log reports.
 - Project-root path confinement for config, output and step working directories.
 - Smoke fixtures for successful execution and intentional exit-code-23 failure.
+- PowerShell smoke-test harness covering argument boundaries, report capture, exit-code handling and lexical path traversal.
 
 ## Quick start
 
