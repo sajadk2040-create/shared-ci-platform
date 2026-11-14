@@ -18,8 +18,9 @@ Each step declares:
 - `args`: argument array; never concatenate a shell command string.
 - `workingDirectory`: path relative to the project root.
 - `continueOnError`: optional, defaults to false.
+- `timeoutSeconds`: optional integer from 1 to 86400. When omitted, the runner waits without a time limit. On timeout, it attempts to terminate the child process and its descendant process tree, records `timedOut: true`, and uses exit code 124.
 
-The runner records start/end time, duration, exit code, stdout/stderr filenames, status and argument count. Raw argument values are intentionally excluded from logs and JSON reports because arguments may contain credentials. Any failed step without `continueOnError: true` makes the overall run fail.
+The runner records start/end time, duration, exit code, stdout/stderr filenames, status and argument count. Each run receives a timestamp plus a random identifier so concurrent runs do not overwrite one another's report or stream files. Raw argument values are intentionally excluded from logs and JSON reports because arguments may contain credentials. Any failed step without `continueOnError: true` makes the overall run fail.
 
 ## Reproducibility
 
@@ -33,4 +34,4 @@ The runner records start/end time, duration, exit code, stdout/stderr filenames,
 
 ## Security
 
-Treat project configuration and commands as executable code. Only run trusted branches/projects on shared self-hosted machines. Use isolated workspaces and a low-privilege runner account. Do not share a runner between untrusted repositories and privileged deployment jobs.
+Treat project configuration and commands as executable code. Only run trusted branches/projects on shared self-hosted machines. Use isolated workspaces and a low-privilege runner account. Do not share a runner between untrusted repositories and privileged deployment jobs. Timeout tree termination is best-effort and should not be treated as a substitute for OS-level job isolation and resource controls.
