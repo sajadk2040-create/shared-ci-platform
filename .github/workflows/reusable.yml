@@ -49,7 +49,8 @@ jobs:
         env:
           SHARED_CI_CONFIG_PATH: ${{ inputs.config-path }}
         run: |
-          ../_shared-ci-platform/scripts/run.ps1 -ConfigPath $env:SHARED_CI_CONFIG_PATH
+          # Keep report output predictable for the artifact-upload step.
+          ../_shared-ci-platform/scripts/run.ps1 -ConfigPath $env:SHARED_CI_CONFIG_PATH -OutputDirectory artifacts/ci
 
       - name: Upload reports
         if: always()
