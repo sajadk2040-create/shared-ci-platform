@@ -12,7 +12,7 @@ on:
         description: Reviewed shared-ci-platform tag or commit to execute
         required: false
         type: string
-        default: v0.1.0
+        default: 1414e5532927dd9818a1635c0408ab69883d2dbe
 
 permissions:
   contents: read
@@ -42,6 +42,16 @@ jobs:
           if ($PSVersionTable.PSVersion.Major -lt 7) {
             throw "PowerShell 7 or newer is required."
           }
+
+      - name: Validate shared CI core runner
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File _shared-ci-platform/tests/Invoke-RunnerSmokeTests.ps1
+
+      - name: Validate shared CI host safety scripts
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File _shared-ci-platform/tests/Invoke-RunnerHostSafetyTests.ps1
 
       - name: Run shared CI
         shell: pwsh
