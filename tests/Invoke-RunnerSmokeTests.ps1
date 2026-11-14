@@ -116,7 +116,31 @@ try {
   } finally { Pop-Location }
   Assert-True ($escapeRunnerExit -ne 0) "workingDirectory traversal must be rejected"
 
-  # Test 4: absolute config paths are rejected.
+  # Test 4: a junction inside the project must not redirect a step outside it.
+  if ($IsWindows) {
+    $outsideRoot = Join-Path $testRoot "outside"
+    $junctionPath = Join-Path $projectRoot "linked-outside"
+    $null = New-Item -ItemType Directory -Path $outsideRoot -Force
+    $null = New-Item -ItemType Junction -Path $junctionPath -Target $outsideRoot
+    try {
+      $junctionConfig = Join-Path $projectRoot "junction.json"
+      Write-Config $junctionConfig ([pscustomobject]@{
+        schemaVersion = 1
+        project = @{ name = "shared-ci-smoke-junction" }
+        steps = @(@{ name = "junction-escape"; command = $pwshPath; workingDirectory = "linked-outside"; args = @("-NoProfile", "-Version") })
+      })
+      Push-Location $projectRoot
+      try {
+        & $pwshPath -NoProfile -File (Join-Path $platformRoot "scripts/run.ps1") -ConfigPath "junction.json" 2>&1 | Out-Null
+        $junctionRunnerExit = $LASTEXITCODE
+      } finally { Pop-Location }
+      Assert-True ($junctionRunnerExit -ne 0) "junction path escaping project root must be rejected"
+    } finally {
+      if (Test-Path -LiteralPath $junctionPath) { Remove-Item -LiteralPath $junctionPath -Force }
+    }
+  }
+
+  # Test 5: absolute config paths are rejected.
   Push-Location $projectRoot
   try {
     & $pwshPath -NoProfile -File (Join-Path $platformRoot "scripts/run.ps1") -ConfigPath $successConfig 2>&1 | Out-Null
@@ -124,7 +148,7 @@ try {
   } finally { Pop-Location }
   Assert-True ($absoluteConfigExit -ne 0) "absolute config path must be rejected"
 
-  # Test 5: invalid schema version is rejected before any configured command runs.
+  # Test 6: invalid schema version is rejected before any configured command runs.
   $invalidMarker = Join-Path $projectRoot "invalid-config-command-ran.txt"
   $invalidConfig = Join-Path $projectRoot "invalid.json"
   Write-Config $invalidConfig ([pscustomobject]@{
@@ -140,7 +164,7 @@ try {
   Assert-True ($invalidConfigExit -ne 0) "unsupported schema version must be rejected"
   Assert-True (-not (Test-Path -LiteralPath $invalidMarker)) "invalid config must be rejected before executing steps"
 
-  Write-Host "PASS: runner smoke tests (5 groups)"
+  Write-Host "PASS: runner smoke tests (6 groups; junction test runs on Windows)"
   Write-Host "Temporary test workspace: $testRoot"
   $testPassed = $true
 }
