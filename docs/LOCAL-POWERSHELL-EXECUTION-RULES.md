@@ -16,10 +16,11 @@ These instructions apply to all future local PowerShell commands and validation 
 5. Prefer a single report buffer (for example, a `StringBuilder` or collected output lines) and use `Write-Host` to display it, then `Set-Clipboard -Value $report` to copy exactly the same report.
 6. If clipboard access fails, print an explicit warning and preserve the full console output. Never silently claim the report was copied.
 7. Do not truncate test output in the operator-facing report. If an underlying tool imposes an output limit, disclose that limitation.
+8. Supply multi-line scripts as one complete block. Do not split a PowerShell `if/else`, function, loop, or `try/catch` construct across separate console submissions.
 
 ## Safe execution pattern
 
-- Use the intended PowerShell executable explicitly when required (for this project, PowerShell 7 via `pwsh.exe`).
+- Use the intended PowerShell executable explicitly when required. For this project, use 64-bit PowerShell 7 at `C:\Program Files\PowerShell\7\pwsh.exe` when installed.
 - Run commands directly in the interactive console when output visibility matters. Avoid wrapping the whole invocation in fragile process-capture helpers.
 - Capture `$LASTEXITCODE` immediately after native executables such as `pwsh.exe`, `git.exe`, or `gh.exe`.
 - For PowerShell scripts, also capture terminating errors and the script's reported status; do not confuse a wrapper's exit code with the test process result.
@@ -45,12 +46,12 @@ These instructions apply to all future local PowerShell commands and validation 
 
 ## Current validation checkpoint (2026-11-14)
 
-Task `shared-ci-host-safety-013` was independently verified from its GitHub response file:
-- `status: passed`
-- `exitCode: 0`
-- `timedOut: false`
-- Standard error was empty.
-- Standard output ended with `PASS: runner host safety tests (5 groups)`.
-- The test explicitly did not create accounts, set passwords, mutate ACLs, register a runner, or install a service.
+The following GitHub response JSON files were independently inspected:
 
-Continue with the filesystem-link integration test, then the consumer-template test. Verify each response JSON before advancing. Keep the PR draft and do not register a runner until all gates are complete.
+- `shared-ci-host-safety-013`: `status=passed`, `exitCode=0`, `timedOut=false`; five host-safety test groups passed. The harness did not create accounts, set passwords, mutate ACLs, register a runner, or install a service.
+- `shared-ci-filesystem-links-015`: `status=passed`, `exitCode=0`; an actual Windows junction was identified as a reparse point. Symbolic-link creation was skipped because Administrator privilege was unavailable.
+- `shared-ci-consumer-template-016`: `status=passed`, `exitCode=0`; all three consumer-template groups passed.
+- `shared-ci-core-smoke-017`: `status=passed`, `exitCode=0`; all eight core smoke-test groups passed, including timeout tree termination and parallel report isolation.
+- `shared-ci-agent-allowlist-012` and `agent-response-decision-tests-010`: passed.
+
+These are local validation results, not proof of a sandbox or successful dedicated-runner provisioning. No Shared CI runner has been registered, no Windows service installed, and no reusable workflow has been dispatched on a dedicated runner. Keep the PR in draft pending remaining review and authorization gates.
