@@ -2,6 +2,11 @@
 
 These instructions apply to all future local PowerShell commands and validation steps for MotionDeck Studio and Shared CI Platform.
 
+## Console presentation
+
+1. Begin every operator-facing PowerShell script with `Clear-Host` so the console is cleared before the task starts.
+2. Do not put `Clear-Host` between individual lines of a multi-line script; clear once at the beginning of each new script/task.
+
 ## Mandatory output handling
 
 1. Every PowerShell command or script sent to the operator must print a complete, clearly delimited report.
