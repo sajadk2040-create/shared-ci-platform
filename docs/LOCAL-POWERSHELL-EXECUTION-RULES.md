@@ -52,6 +52,7 @@ The following GitHub response JSON files were independently inspected:
 - `shared-ci-filesystem-links-015`: `status=passed`, `exitCode=0`; an actual Windows junction was identified as a reparse point. Symbolic-link creation was skipped because Administrator privilege was unavailable.
 - `shared-ci-consumer-template-016`: `status=passed`, `exitCode=0`; all three consumer-template groups passed.
 - `shared-ci-core-smoke-017`: `status=passed`, `exitCode=0`; all eight core smoke-test groups passed, including timeout tree termination and parallel report isolation.
+- `shared-ci-agent-static-018`: `status=passed`, `exitCode=0`; local agent static safety tests passed.
 - `shared-ci-agent-allowlist-012` and `agent-response-decision-tests-010`: passed.
 
 These are local validation results, not proof of a sandbox or successful dedicated-runner provisioning. No Shared CI runner has been registered, no Windows service installed, and no reusable workflow has been dispatched on a dedicated runner. Keep the PR in draft pending remaining review and authorization gates.
