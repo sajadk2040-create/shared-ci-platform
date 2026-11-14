@@ -57,21 +57,21 @@ try {
     $createdAccount = $true
     $administratorsSid = [Security.Principal.SecurityIdentifier]::new('S-1-5-32-544')
     $systemSid = [Security.Principal.SecurityIdentifier]::new('S-1-5-18')
+    $userSid = if ($user.SID -is [Security.Principal.SecurityIdentifier]) { $user.SID } else { [Security.Principal.SecurityIdentifier]::new([string]$user.SID) }
     $security = [Security.AccessControl.DirectorySecurity]::new()
     $security.SetAccessRuleProtection($true, $false)
     $inheritance = [Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [Security.AccessControl.InheritanceFlags]::ObjectInherit
     $propagation = [Security.AccessControl.PropagationFlags]::None
     $allow = [Security.AccessControl.AccessControlType]::Allow
-    foreach ($sid in @($administratorsSid, $systemSid, $user.SID)) {
+    foreach ($sid in @($administratorsSid, $systemSid, $userSid)) {
         $rule = [Security.AccessControl.FileSystemAccessRule]::new($sid, [Security.AccessControl.FileSystemRights]::FullControl, $inheritance, $propagation, $allow)
         [void]$security.AddAccessRule($rule)
     }
-    $security.SetOwner($administratorsSid)
     Set-Acl -LiteralPath $targetRoot -AclObject $security
     [pscustomobject]@{
         Result = 'Prepared'
         AccountName = $user.Name
-        AccountSid = $user.SID.Value
+        AccountSid = $userSid.Value
         RunnerRoot = $targetRoot
         DirectoryAcl = 'Protected: SYSTEM, local Administrators, and dedicated account only'
         ExistingAccountsModified = $false
