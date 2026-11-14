@@ -6,7 +6,7 @@ Run on a disposable or otherwise approved Windows test host with PowerShell 7. N
 
 The harness is non-provisioning. It performs:
 
-1. PowerShell parser validation for the preflight, provisioning, isolation-audit, and shared ACL helper scripts.
+1. PowerShell parser validation for the preflight, provisioning, isolation-audit, shared ACL helper, and opt-in filesystem-link integration scripts.
 2. Preflight fixture tests for matching repository metadata (exit 0), mismatched repository (exit 3), missing metadata (exit 2), and credential marker existence reporting. Sentinel contents placed in fake credential files must not appear in console output or the JSON report.
 3. Provisioning plan-only test with a unique account name and unique path. It verifies that no target directory is created.
 4. Isolation-audit source checks for root and ancestor reparse-point rejection, including volume-root-safe path traversal; synthetic ordinary-directory versus reparse-point attribute cases.
