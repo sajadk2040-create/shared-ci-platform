@@ -118,19 +118,25 @@ function Protect-Output {
   return $safe
 }
 
+function Get-ResponseLookupDecision {
+  param([int]$ExitCode,[string]$Diagnostic)
+  if ($ExitCode -eq 0) { return "exists" }
+  if ($Diagnostic -match '(?i)Not Found\s*\(HTTP 404\)|HTTP(?:/\d(?:\.\d)?)?\s+404') {
+    return "missing"
+  }
+  $safeDiagnostic = Protect-Output $Diagnostic
+  throw "Could not verify whether response lookup succeeded (gh exit $ExitCode): $safeDiagnostic"
+}
+
 function Test-ResponseExists {
   param([string]$Path)
   # Only an explicit GitHub 404 means the response is absent. Authentication,
   # rate-limit, network, and server failures must stop processing (fail closed).
   $output = & gh api "repos/$Repository/contents/${Path}?ref=$Ref" --jq ".sha" 2>&1
   $code = $LASTEXITCODE
-  if ($code -eq 0) { return $true }
   $diagnostic = ($output | Out-String).Trim()
-  if ($diagnostic -match '(?i)Not Found\s*\(HTTP 404\)|HTTP(?:/\d(?:\.\d)?)?\s+404') {
-    return $false
-  }
-  $safeDiagnostic = Protect-Output $diagnostic
-  throw "Could not verify whether response '$Path' already exists (gh exit $code): $safeDiagnostic"
+  $decision = Get-ResponseLookupDecision -ExitCode $code -Diagnostic $diagnostic
+  return ($decision -eq "exists")
 }
 
 function Publish-Response {
