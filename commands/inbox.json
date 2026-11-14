@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "command": {
-    "id": "shared-ci-core-smoke-001",
-    "task": "shared-ci.core-smoke",
-    "issuedAt": "2026-11-14T20:40:14+03:30",
-    "expiresAt": "2026-11-14T21:10:14+03:30"
+    "id": "motiondeck-git-status-001",
+    "task": "motiondeck.git-status",
+    "issuedAt": "2026-11-14T20:41:10+03:30",
+    "expiresAt": "2026-11-14T21:11:10+03:30"
   }
 }
