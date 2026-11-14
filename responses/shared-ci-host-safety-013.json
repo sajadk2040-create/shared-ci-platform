@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "commandId": "shared-ci-host-safety-013",
+  "task": "shared-ci.host-safety",
+  "status": "passed",
+  "exitCode": 0,
+  "timedOut": false,
+  "startedAt": "2026-11-14T21:08:42.4398045+03:30",
+  "finishedAt": "2026-11-14T21:08:46.7958496+03:30",
+  "durationSeconds": 4.221,
+  "stdout": "PASS: runner host scripts parse\r\nPASS: preflight match/mismatch, missing metadata, and credential non-disclosure\r\nPASS: provisioning plan-only non-mutation and invalid-input rejection\r\nPASS: ACL positive/negative cases and synthetic symbolic-link/junction attribute detection\r\nPASS: isolation audit parser and reparse-point safety guard\r\nPASS: provisioning source safety guards\r\nNOTE: no account creation, password setting, ACL mutation, runner registration, or service installation was exercised.\r\nPASS: runner host safety tests (5 groups)\r\n",
+  "stderr": ""
+}
