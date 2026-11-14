@@ -52,6 +52,7 @@ This project is distributed under the [MIT License](LICENSE).
 ## Security
 
 - Use a dedicated least-privilege runner account and isolated work directory.
+- The runner rejects existing symlink/junction/reparse-point components in project-relative paths. This is defense-in-depth, not protection against a concurrent time-of-check/time-of-use filesystem race; keep the workspace isolated and execute trusted project configuration only.
 - Keep credentials out of project configuration and logs.
 - Prefer protected-branch pushes and manual dispatch.
 - Pin reusable workflow calls to a reviewed release tag or commit SHA.
