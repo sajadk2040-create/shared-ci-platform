@@ -54,8 +54,8 @@ Provision a separate runner instance specifically for `sajadk2040-create/shared-
 
 1. Confirm the existing unrelated runner is intentionally retained by its owner; do not touch its process or credentials.
 2. Decide whether the new Shared CI runner will be a separate local Windows account on this host or a dedicated VM. A dedicated VM provides stronger isolation.
-3. Create the new standard account and runner directory using an administrator-controlled setup session. Keep the account password and registration token out of ChatGPT and shell history.
-4. Apply and verify explicit NTFS ACLs before registration.
+3. Review the plan with `scripts/Prepare-SharedCiRunnerHost.ps1` (no changes), then use its explicit `-Apply` and confirmation gate from an elevated PowerShell session only after a separate decision to provision this host. Enter the account password only at its SecureString prompt.
+4. Verify the new account is not an administrator and inspect the protected NTFS ACLs locally before any runner registration. The provisioning helper does not grant service-logon rights, register a runner, or install a service.
 5. Register the new runner only to `shared-ci-platform` with the exact labels required by the reusable workflow.
 6. Install it as a service under the dedicated account and verify service identity, startup type and online status.
 7. Only then perform a manually approved end-to-end workflow test against a protected test branch, inspect artifact contents, and clean the test workspace.
