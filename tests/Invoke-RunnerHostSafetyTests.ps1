@@ -84,9 +84,9 @@ try {
         [pscustomobject]@{ Identity=$Identity; AccessControlType=$Type; Rights=$Rights; InheritanceFlags=$Inheritance; PropagationFlags=$Propagation; IsInherited=$Inherited }
     }
     $validRules = @(
-        (New-TestAclRule $expectedSids[0]),
-        (New-TestAclRule $expectedSids[1]),
-        (New-TestAclRule $expectedSids[2])
+        (New-TestAclRule -Identity $expectedSids[0]),
+        (New-TestAclRule -Identity $expectedSids[1]),
+        (New-TestAclRule -Identity $expectedSids[2])
     )
     $validAcl = Get-SharedCiAclRuleAssessment -Rules $validRules -ExpectedIdentities $expectedSids
     Assert-True ($validAcl.IsValid) 'exact three-principal ACL should pass'
