@@ -8,7 +8,7 @@ $ErrorActionPreference = 'Stop'
 if ($env:OS -ne 'Windows_NT') { throw 'This audit is Windows-only.' }
 if (-not [Environment]::Is64BitProcess) { throw 'Run with 64-bit PowerShell 7.' }
 Import-Module Microsoft.PowerShell.LocalAccounts -ErrorAction Stop
-$root = [IO.Path]::GetFullPath($RunnerRoot).TrimEnd('\')
+$root = [IO.DirectoryInfo]::new($RunnerRoot).FullName
 if (-not (Test-Path -LiteralPath $root -PathType Container)) { throw "RunnerRoot does not exist: $root" }
 $current = $root
 while ($current) {
