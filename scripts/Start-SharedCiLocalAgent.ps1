@@ -93,7 +93,7 @@ function Invoke-AllowedTask {
       return Invoke-FixedProcess -FileName "git" -Arguments @("rev-parse","HEAD") -WorkingDirectory $MotionDeckRoot -TimeoutSeconds 30
     }
     "shared-ci.core-smoke" {
-      Assert-TrustedCheckout -Path $SharedCiRoot -ExpectedRemote $sharedCiRemote -ExpectedBranch "main"
+      Assert-TrustedCheckout -Path $SharedCiRoot -ExpectedRemote $sharedCiRemote -ExpectedBranch $Ref
       $scriptPath = Join-Path $SharedCiRoot "tests/Invoke-RunnerSmokeTests.ps1"
       if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) { throw "Shared CI core smoke script not found." }
       return Invoke-FixedProcess -FileName "pwsh" -Arguments @("-NoProfile","-File",$scriptPath) -WorkingDirectory $SharedCiRoot -TimeoutSeconds 900
