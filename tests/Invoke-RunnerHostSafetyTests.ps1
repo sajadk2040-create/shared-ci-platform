@@ -70,7 +70,7 @@ try {
     Write-Host 'PASS: provisioning plan-only non-mutation and invalid-input rejection'
 
     $auditSource = Get-Content -LiteralPath $audit -Raw
-    Assert-True ($auditSource.Contains('[IO.FileAttributes]::ReparsePoint')) 'isolation audit must reject a reparse-point runner root'
+    Assert-True ($auditSource.Contains('Test-SharedCiReparsePointAttributes -Attributes $currentItem.Attributes')) 'isolation audit must use the tested reparse-point predicate'
     Assert-True ($auditSource.Contains('is a reparse point:')) 'reparse-point rejection must fail with an explicit explanation'
     Assert-True ($auditSource.Contains('[IO.Directory]::GetParent($current)')) 'isolation audit must inspect every ancestor directory for reparse points'
     Assert-True ($auditSource.Contains('[IO.DirectoryInfo]::new($RunnerRoot).FullName')) 'isolation audit must normalize the runner root without stripping the volume-root separator'
@@ -78,6 +78,16 @@ try {
     Assert-True ($auditSource.Contains('$next = $parent.FullName')) 'ancestor traversal must preserve the volume-root path'
     Assert-True (-not $auditSource.Contains('$parent.FullName.TrimEnd')) 'ancestor traversal must not convert a volume root such as C:\\ into a drive-relative path'
     . $aclHelper
+    $normalAttributes = [IO.FileAttributes]::Directory
+    $reparseAttributes = [IO.FileAttributes]::Directory -bor [IO.FileAttributes]::ReparsePoint
+    Assert-True (-not (Test-SharedCiReparsePointAttributes -Attributes $normalAttributes)) 'ordinary directory attributes must not be classified as reparse points'
+    Assert-True (Test-SharedCiReparsePointAttributes -Attributes $reparseAttributes) 'symbolic-link/junction reparse attributes must be rejected'
+    $syntheticPathComponents = @(
+        [pscustomobject]@{ Name='runner-root'; Attributes=$normalAttributes },
+        [pscustomobject]@{ Name='parent'; Attributes=$reparseAttributes }
+    )
+    $syntheticAncestorLink = @($syntheticPathComponents | Where-Object { Test-SharedCiReparsePointAttributes -Attributes $_.Attributes }).Count -gt 0
+    Assert-True $syntheticAncestorLink 'a reparse point in an ancestor component must be detected'
     $expectedSids = @('S-1-5-18','S-1-5-32-544','S-1-5-21-100-200-300-1001')
     function New-TestAclRule {
         param([string]$Identity,[string]$Type='Allow',[string]$Rights='FullControl',[string]$Inheritance='ContainerInherit, ObjectInherit',[string]$Propagation='None',[bool]$Inherited=$false)
@@ -102,7 +112,7 @@ try {
     Assert-True (-not (Get-SharedCiAclRuleAssessment -Rules $wrongRights -ExpectedIdentities $expectedSids).IsValid) 'non-FullControl rights must fail ACL assessment'
     $inheritedRules = @($validRules[0],$validRules[1],(New-TestAclRule -Identity $expectedSids[2] -Inherited $true))
     Assert-True (-not (Get-SharedCiAclRuleAssessment -Rules $inheritedRules -ExpectedIdentities $expectedSids).IsValid) 'inherited ACL entries must fail ACL assessment'
-    Write-Host 'PASS: ACL positive, extra-principal, Deny, missing-principal, rights, and inheritance cases'
+    Write-Host 'PASS: ACL positive/negative cases and synthetic symbolic-link/junction attribute detection'
     Write-Host 'PASS: isolation audit parser and reparse-point safety guard'
 
     $source = Get-Content -LiteralPath $provision -Raw
