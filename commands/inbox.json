@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "command": {
-    "id": "agent-static-validation-003",
-    "task": "shared-ci.local-agent-static",
-    "issuedAt": "2026-11-14T20:37:00+03:30",
-    "expiresAt": "2026-11-14T21:07:00+03:30"
+    "id": "motiondeck-repository-validation-001",
+    "task": "motiondeck.repository-validation",
+    "issuedAt": "2026-11-14T20:39:18+03:30",
+    "expiresAt": "2026-11-14T21:09:18+03:30"
   }
 }
