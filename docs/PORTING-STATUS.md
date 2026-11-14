@@ -1,6 +1,6 @@
 # Standalone repository import status
 
-**Status:** initial Windows PowerShell 7 runtime smoke suite passed; expanded timeout and concurrency regression coverage added and pending execution. Release remains blocked.
+**Status:** expanded eight-group Windows PowerShell 7.6.9 runtime smoke suite passed on `068a78027c74d023f13abf00122de14bb1d55461`. GitHub workflow validation, runner hardening and release gates remain outstanding.
 
 ## Imported from MotionDeck staging
 
@@ -31,16 +31,28 @@ The reusable workflow defaults its `platform-ref` input to `v0.1.0`; therefore c
 - Added optional `timeoutSeconds` per step (integer 1–86400) to the runner and JSON Schema. A timeout attempts to kill the entire descendant process tree, records `timedOut: true`, and reports exit code 124.
 - Run IDs now include millisecond time and a random suffix to avoid concurrent report/stream filename collisions.
 - Extended the smoke harness with timeout + spawned-child termination and parallel-run artifact preservation tests.
-- These new changes are committed but **have not yet been runtime-tested**. Run the expanded harness on Windows PowerShell 7 before considering release.
+- The expanded harness passed on Windows PowerShell 7.6.9 after the timeout, concurrency and cleanup changes; see the runtime validation update below.
 - Raw process argument values remain excluded from runner JSON/log metadata; child stdout/stderr can still contain secrets and must be treated as sensitive.
 
 ## Remaining work
 
-1. Execute the expanded smoke harness on Windows PowerShell 7 and review all output.
-2. Review runner exception cleanup, process-tree termination limitations and workspace isolation.
-3. Parse and review the reusable workflow and permissions.
+1. Review remaining process-tree termination limitations and workspace isolation.
+2. Parse and review the reusable workflow and permissions.
+3. Re-run local validation on the final release candidate.
 4. Register a dedicated least-privilege self-hosted runner only after security review and user approval.
 5. Publish `v0.1.0` only after all applicable gates pass.
 6. Update MotionDeck's consumer workflow to call this repository at the released tag.
 
 No GitHub Actions workflow was triggered, no self-hosted runner was registered, and no release tag was published.
+
+
+## Runtime validation update — 2026-11-14
+
+- Expanded the local Windows PowerShell 7 harness to eight groups, adding timeout handling, descendant-process termination and simultaneous-run report isolation.
+- Runtime-tested on Windows with PowerShell 7.6.9. Final tested commit: `068a78027c74d023f13abf00122de14bb1d55461`.
+- The complete harness printed `PASS: runner smoke tests (8 groups; includes timeout tree termination and parallel report isolation)` and exited with code 0.
+- The timeout fixture verified `timedOut: true`, exit code 124, and that the spawned child process no longer remained running.
+- The parallel fixture launched two runner processes into one report directory and verified two distinct run IDs and two preserved files for each JSON, Markdown, log, stdout and stderr artifact.
+- Added defensive process-tree cleanup if process setup, waiting or stream collection fails after process start; reran the full harness after this change and it passed.
+- JSON syntax parsing passed for the schema, example config, three presets and smoke-project config. Full Draft 2020-12 validation was not rerun on this host because the Python `jsonschema` package is not installed.
+- This is local runner validation only. No GitHub Actions workflow was dispatched, no self-hosted runner was registered, and no release tag was created.
