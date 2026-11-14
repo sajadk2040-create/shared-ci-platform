@@ -9,6 +9,14 @@ This repository can be validated on a developer-controlled Windows machine witho
 - A clean checkout of this repository.
 - No GitHub token, repository secret, or production credential is needed.
 
+## Consumer starter template validation
+
+```powershell
+pwsh -NoProfile -File tests/Invoke-ConsumerTemplateTests.ps1
+```
+
+This local, non-provisioning test checks the consumer starter config structure, parses its PowerShell smoke script, and verifies the workflow's matching immutable-SHA placeholders, manual-only trigger and read-only permission. It is a focused structural test, not a full JSON Schema validator or a GitHub Actions execution. See [Consumer template validation](CONSUMER-TEMPLATE-TESTS.md).
+
 ## Core runner validation
 
 From the repository root:
