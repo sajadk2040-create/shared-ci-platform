@@ -10,8 +10,18 @@ if (-not [Environment]::Is64BitProcess) { throw 'Run with 64-bit PowerShell 7.' 
 Import-Module Microsoft.PowerShell.LocalAccounts -ErrorAction Stop
 $root = [IO.Path]::GetFullPath($RunnerRoot).TrimEnd('\')
 if (-not (Test-Path -LiteralPath $root -PathType Container)) { throw "RunnerRoot does not exist: $root" }
-$rootItem = Get-Item -LiteralPath $root -Force
-if (($rootItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'RunnerRoot must not be a reparse point (junction or symbolic link).' }
+$current = $root
+while ($current) {
+    $currentItem = Get-Item -LiteralPath $current -Force -ErrorAction Stop
+    if (($currentItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+        throw "RunnerRoot path or one of its ancestors is a reparse point: $current"
+    }
+    $parent = [IO.Directory]::GetParent($current)
+    if ($null -eq $parent) { break }
+    $next = $parent.FullName.TrimEnd('\\')
+    if ($next -eq $current) { break }
+    $current = $next
+}
 $user = Get-LocalUser -Name $AccountName -ErrorAction Stop
 $adminSid = [Security.Principal.SecurityIdentifier]::new('S-1-5-32-544')
 $systemSid = [Security.Principal.SecurityIdentifier]::new('S-1-5-18')
