@@ -34,6 +34,15 @@ Assert-True (Test-Path -LiteralPath $inboxPath) "Inbox file exists"
 
 $inbox = Get-Content -LiteralPath $inboxPath -Raw | ConvertFrom-Json
 Assert-True ($inbox.schemaVersion -eq 1) "Inbox schema version is 1"
-Assert-True ($null -eq $inbox.command) "Initial inbox is empty"
+if ($null -ne $inbox.command) {
+  Assert-True (-not [string]::IsNullOrWhiteSpace([string]$inbox.command.id)) "Inbox command has an ID"
+  Assert-True (-not [string]::IsNullOrWhiteSpace([string]$inbox.command.task)) "Inbox command has a task"
+  Assert-True ($inbox.command.task -match '^(motiondeck\.(repository-validation|git-status|current-commit)|shared-ci\.(core-smoke|local-agent-static))
+
+Write-Host "PASS: local agent static safety tests"
+) "Inbox task is allowlisted"
+  Assert-True (-not [string]::IsNullOrWhiteSpace([string]$inbox.command.issuedAt)) "Inbox command has issuedAt"
+  Assert-True (-not [string]::IsNullOrWhiteSpace([string]$inbox.command.expiresAt)) "Inbox command has expiresAt"
+}
 
 Write-Host "PASS: local agent static safety tests"
