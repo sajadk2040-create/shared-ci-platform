@@ -24,3 +24,9 @@ function Get-SharedCiAclRuleAssessment {
         MissingPrincipals = $missing
     }
 }
+
+function Test-SharedCiReparsePointAttributes {
+    [CmdletBinding()]
+    param([Parameter(Mandatory=$true)][IO.FileAttributes]$Attributes)
+    return (($Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)
+}
