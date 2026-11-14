@@ -8,6 +8,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $requiredConfirmation = 'CREATE SHARED-CI SERVICE ACCOUNT AND ISOLATED DIRECTORY'
+. (Join-Path $PSScriptRoot 'SharedCiAclRules.ps1')
 function Test-IsAdministrator {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = [Security.Principal.WindowsPrincipal]::new($identity)
@@ -21,16 +22,14 @@ if ($targetRoot.StartsWith($profileRoot + '\', [StringComparison]::OrdinalIgnore
 if ($targetRoot -notmatch '^[A-Za-z]:\\GitHubRunners\\[A-Za-z0-9_-]+$') { throw 'RunnerRoot must be directly under <drive>:\GitHubRunners\.' }
 if (Test-Path -LiteralPath $targetRoot) { throw "Target directory already exists; refusing to reuse or modify it: $targetRoot" }
 $parentPath = Split-Path -Parent $targetRoot
-if (Test-Path -LiteralPath $parentPath) {
-    $parentItem = Get-Item -LiteralPath $parentPath -Force
-    if (($parentItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'Parent directory is a reparse point; refusing to continue.' }
-}
+$parentAclAssessment = Get-SharedCiParentAclAssessment -Path $parentPath
 $existing = Get-CimInstance -ClassName Win32_UserAccount -Filter "LocalAccount=True AND Name='$AccountName'" -ErrorAction Stop |
     Where-Object { $_.LocalAccount -and $_.Name -eq $AccountName }
 if ($null -ne $existing) { throw "Local account '$AccountName' already exists; refusing to modify an existing account." }
 [pscustomobject]@{
     AccountName = $AccountName
     RunnerRoot = $targetRoot
+    ParentAclAssessment = $parentAclAssessment
     ExistingAccountWillBeModified = $false
     ExistingRunnerWillBeModified = $false
     RunnerRegistration = 'Not performed'
@@ -44,6 +43,7 @@ if (-not $Apply) {
 }
 if (-not [Environment]::Is64BitProcess) { throw 'Apply mode requires 64-bit PowerShell 7 because the Windows LocalAccounts module is not supported in 32-bit PowerShell.' }
 if (-not (Test-IsAdministrator)) { throw 'Run this script from an elevated 64-bit PowerShell 7 session.' }
+if (-not $parentAclAssessment.IsSafe) { throw 'Runner parent path failed the read-only ACL/reparse-point preflight. Review ParentAclAssessment before provisioning.' }
 Import-Module Microsoft.PowerShell.LocalAccounts -ErrorAction Stop
 if ($ConfirmationText -cne $requiredConfirmation) { throw "Explicit confirmation required. Supply -ConfirmationText exactly: $requiredConfirmation" }
 if (-not $PSCmdlet.ShouldProcess("$AccountName and $targetRoot", 'Create standard local account and isolated directory')) { throw 'Provisioning was not approved by ShouldProcess.' }
