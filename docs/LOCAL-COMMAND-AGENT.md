@@ -49,7 +49,7 @@ Each response is written to responses/<command-id>.json. Responses include task,
 
 Run the parser and source-guard checks before starting the agent:
 
-    pwsh -NoProfile -File .\\tests\\Invoke-LocalAgentStaticTests.ps1
+    pwsh -NoProfile -File .\tests\Invoke-LocalAgentStaticTests.ps1
 
 This is a static check only; it does not validate live GitHub polling or Windows process execution.
 
