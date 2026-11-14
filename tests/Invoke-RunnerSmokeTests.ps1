@@ -11,6 +11,15 @@ if (-not (Test-Path -LiteralPath $runnerSource -PathType Leaf)) {
   throw "Runner not found: $runnerSource"
 }
 
+$parseTokens = $null
+$parseErrors = $null
+[System.Management.Automation.Language.Parser]::ParseFile($runnerSource, [ref]$parseTokens, [ref]$parseErrors) | Out-Null
+if ($parseErrors.Count -gt 0) {
+  $details = ($parseErrors | ForEach-Object { $_.Message }) -join [Environment]::NewLine
+  throw "PowerShell parser validation failed:`n$details"
+}
+Write-Host "PASS: PowerShell parser validation"
+
 $testPassed = $false
 $testRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("shared-ci-smoke-" + [guid]::NewGuid().ToString("N"))
 $projectRoot = Join-Path $testRoot "project"
