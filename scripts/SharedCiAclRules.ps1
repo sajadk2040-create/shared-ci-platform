@@ -63,6 +63,7 @@ function Get-SharedCiParentAclAssessment {
     [CmdletBinding()]
     param([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$Path)
 
+    $broadSids = @('S-1-1-0','S-1-5-11','S-1-5-32-545','S-1-5-4','S-1-5-2')
     $candidate = [IO.Path]::GetFullPath($Path)
     while (-not (Test-Path -LiteralPath $candidate -PathType Container)) {
         $parent = [IO.Directory]::GetParent($candidate)
