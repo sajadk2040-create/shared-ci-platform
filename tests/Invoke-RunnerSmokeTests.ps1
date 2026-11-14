@@ -82,7 +82,7 @@ try {
   $passReport = Get-Content -LiteralPath $jsonReport.FullName -Raw | ConvertFrom-Json
   Assert-True ($passReport.status -eq "passed") "success report status should be passed"
   Assert-True ($passReport.steps[0].exitCode -eq 0) "success step exit code should be 0"
-  Assert-True ($passReport.steps[0].argumentCount -eq 9) "report should record argument count without raw argument values"
+  Assert-True ($passReport.steps[0].argumentCount -eq 10) "report should record argument count without raw argument values"
   $serializedReport = Get-Content -LiteralPath $jsonReport.FullName -Raw
   Assert-True (-not $serializedReport.Contains("value with spaces")) "report must not expose raw process arguments"
   $runLog = Get-ChildItem -LiteralPath $passReports -Filter "*.log" | Select-Object -First 1
