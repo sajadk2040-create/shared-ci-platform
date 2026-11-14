@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "command": {
-    "id": "agent-response-decision-tests-010",
-    "task": "shared-ci.local-agent-static",
-    "issuedAt": "2026-11-14T21:00:07+03:30",
-    "expiresAt": "2026-11-14T21:30:07+03:30"
+    "id": "shared-ci-core-smoke-011",
+    "task": "shared-ci.core-smoke",
+    "issuedAt": "2026-11-14T21:01:54+03:30",
+    "expiresAt": "2026-11-14T21:31:54+03:30"
   }
 }
