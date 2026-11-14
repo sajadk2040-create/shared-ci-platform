@@ -4,17 +4,18 @@ A portable command-based CI runner for local development and dedicated self-host
 
 ## Status
 
-**Bootstrap — not yet runtime-validated.** The release manifest currently identifies `0.1.0` as a bootstrap target, not a production release. See [release gates](docs/REPOSITORY-BOOTSTRAP.md).
+**Runtime validation in progress.** The initial Windows PowerShell 7 smoke suite has passed. Timeout/process-tree and concurrent-run regression tests have now been added and must pass on the target Windows host before release. The release manifest's `0.1.0` remains a bootstrap target, not a production release. See [release gates](docs/REPOSITORY-BOOTSTRAP.md).
 
 ## Features
 
 - PowerShell 7 command runner with explicit executable + argument arrays (no implicit shell command strings).
 - Project configuration contract and JSON Schema v1.
+- Optional per-step timeout with best-effort descendant process-tree termination.
+- Unique timestamp-plus-random run IDs to prevent concurrent report collisions.
 - Starter presets for Node.js, Python and .NET.
 - Timestamped JSON, Markdown, stdout/stderr and log reports; raw process arguments are not copied into JSON/log metadata.
 - Project-root path confinement for config, output and step working directories.
-- Smoke fixtures for successful execution and intentional exit-code-23 failure.
-- PowerShell smoke-test harness covering argument boundaries, report capture, exit-code handling, lexical traversal, Windows junction traversal and invalid-config rejection.
+- PowerShell smoke-test harness covering argument boundaries, report capture, exit-code handling, lexical traversal, Windows junction traversal, invalid-config rejection, timeout termination and concurrent runs.
 
 ## Quick start
 
