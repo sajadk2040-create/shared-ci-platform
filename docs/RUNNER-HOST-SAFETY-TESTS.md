@@ -18,6 +18,6 @@ The test harness uses only a temporary fixture under the system temp directory f
 
 - These tests do not validate the actual Windows ACL result or behavior of New-LocalUser on a production host.
 - Static source checks are regression tripwires, not a substitute for code review.
-- The plan-only test requires the Windows LocalAccounts PowerShell module (Get-LocalUser) and an unused unique account name.
+- Plan-only account-existence checks use the Windows CIM provider and do not require the LocalAccounts module. Apply mode explicitly requires 64-bit PowerShell 7 and imports Microsoft.PowerShell.LocalAccounts before any account creation.
 - Run full provisioning/ACL integration tests only on a disposable Windows VM after a separate explicit approval. Never use the existing nti-national-traffic-intelligence runner installation as a test fixture.
 - Do not publish raw test output if it contains machine-specific paths or identities.
