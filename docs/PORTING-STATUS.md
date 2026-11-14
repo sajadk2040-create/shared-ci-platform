@@ -1,12 +1,12 @@
 # Standalone repository import status
 
-**Status:** source import completed; MIT license added; workflow input handling hardened; runtime validation and release are pending.
+**Status:** initial Windows PowerShell 7 runtime smoke suite passed; expanded timeout and concurrency regression coverage added and pending execution. Release remains blocked.
 
 ## Imported from MotionDeck staging
 
-The standalone repository now contains the shared runner, schema, Node/Python/.NET presets, example project config, smoke success/failure fixtures, adapter contract, adoption guide and reusable workflow.
+The standalone repository contains the shared runner, schema, Node/Python/.NET presets, example project config, smoke success/failure fixtures, adapter contract, adoption guide and reusable workflow.
 
-The platform's root layout is now:
+The platform's root layout is:
 - `scripts/run.ps1`
 - `schemas/ci-project.schema.json`
 - `presets/`
@@ -20,37 +20,27 @@ The platform's root layout is now:
 
 The reusable workflow defaults its `platform-ref` input to `v0.1.0`; therefore consumer workflows must remain disabled until that tag exists and the runner is registered.
 
-## Completed follow-up
+## Runtime validation history
 
-- Added the MIT License at repository root and linked it from README.
-- Hardened the reusable workflow: the caller-provided config path is now passed through an environment variable instead of interpolated directly into a PowerShell command string.
+- The initial Windows PowerShell 7.6.9 run of `tests/Invoke-RunnerSmokeTests.ps1` passed on the tested checkout. The harness returned exit code 0 and confirmed parser validation, successful execution/report capture, argument boundaries and redaction, child exit-code handling, lexical traversal rejection, Windows junction rejection, absolute config rejection, and invalid schema-version rejection.
+- The run generated expected pass and intentional-failure reports in an isolated temporary directory; the intentional child failure was correctly recognized by the harness.
+- The tested checkout was `f90d57348d261edaff0be74766d0911f6ab89bca`. This predates the latest timeout and concurrency changes; it is evidence only for the initial six-group harness, not for the new features.
 
-## Smoke test harness added
+## Latest engineering changes
 
-`tests/Invoke-RunnerSmokeTests.ps1` is a self-contained PowerShell 7 harness. It creates an isolated temporary project and exercises six groups: successful execution and report capture; preservation of arguments containing spaces/quotes; intentional child exit code 23 and runner failure status; rejection of lexical working-directory traversal; rejection of Windows junction traversal; rejection of absolute config paths; and rejection of an unsupported schema version before any configured command executes. The harness is authored but has **not** been executed because this environment has no PowerShell runtime and remote Desktop Commander allowance is nearly exhausted. On Windows it also creates a directory junction to an outside folder and verifies that the runner rejects it; symlink/reparse-point handling still requires runtime validation.
-
-## Latest local-validation preparation
-
-- Added `docs/LOCAL-VALIDATION.md` with a reproducible Windows PowerShell 7 procedure that does not use GitHub Actions or a registered runner.
-- Extended `tests/Invoke-RunnerSmokeTests.ps1` to parse the runner source with the PowerShell language parser before executing smoke tests.
-- Updated the root README to link the local validation guide.
-- These are authored changes only. The harness has still **not** been executed; no runtime pass is claimed.
+- Added optional `timeoutSeconds` per step (integer 1–86400) to the runner and JSON Schema. A timeout attempts to kill the entire descendant process tree, records `timedOut: true`, and reports exit code 124.
+- Run IDs now include millisecond time and a random suffix to avoid concurrent report/stream filename collisions.
+- Extended the smoke harness with timeout + spawned-child termination and parallel-run artifact preservation tests.
+- These new changes are committed but **have not yet been runtime-tested**. Run the expanded harness on Windows PowerShell 7 before considering release.
+- Raw process argument values remain excluded from runner JSON/log metadata; child stdout/stderr can still contain secrets and must be treated as sensitive.
 
 ## Remaining work
 
-1. Run `pwsh -NoProfile -File tests/Invoke-RunnerSmokeTests.ps1` on Windows PowerShell 7 and capture complete output, including the junction case.
-2. Review the reparse-point checks for time-of-check/time-of-use races; the current checks reject existing reparse-point components but do not eliminate concurrent filesystem replacement.
-3. Parse the reusable workflow YAML and review permissions/checkout behavior.
+1. Execute the expanded smoke harness on Windows PowerShell 7 and review all output.
+2. Review runner exception cleanup, process-tree termination limitations and workspace isolation.
+3. Parse and review the reusable workflow and permissions.
 4. Register a dedicated least-privilege self-hosted runner only after security review and user approval.
 5. Publish `v0.1.0` only after all applicable gates pass.
 6. Update MotionDeck's consumer workflow to call this repository at the released tag.
 
-No workflow was triggered and no PowerShell runtime test is claimed by this import.
-
-
-## Follow-up — argument disclosure reduction
-
-- Reviewed runner logging/report behavior and found that raw process arguments were persisted to the execution log and JSON report. Arguments can contain tokens or other sensitive values.
-- Updated `scripts/run.ps1` to log only the argument count and include only `argumentCount` in each step report. The original argument array is still passed unchanged to the child process.
-- Extended the smoke harness to assert that argument count is recorded while the known argument value is absent from the JSON report and log.
-- Harness remains unexecuted; this is a security hardening change with authored regression coverage, not a verified runtime fix.
+No GitHub Actions workflow was triggered, no self-hosted runner was registered, and no release tag was published.
