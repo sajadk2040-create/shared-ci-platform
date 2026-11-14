@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "name": "python-project",
+    "reportDirectory": "artifacts/ci"
+  },
+  "steps": [
+    {
+      "name": "Install locked dependencies",
+      "command": "python",
+      "args": ["-m", "pip", "install", "-r", "requirements.txt"],
+      "workingDirectory": "."
+    },
+    {
+      "name": "Unit tests",
+      "command": "python",
+      "args": ["-m", "pytest"],
+      "workingDirectory": "."
+    }
+  ]
+}
