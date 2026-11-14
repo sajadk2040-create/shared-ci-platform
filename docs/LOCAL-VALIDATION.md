@@ -22,7 +22,7 @@ The harness first parses `scripts/run.ps1` with the PowerShell language parser, 
 
 1. successful child-process execution and JSON/Markdown/log report generation;
 2. stdout and stderr capture;
-3. exact argument boundaries for values containing spaces and quotes;
+3. exact argument boundaries for values containing spaces and quotes, while confirming raw argument values are absent from persisted reports/logs;
 4. preservation of a child process exit code of 23 and runner exit code 1;
 5. rejection of lexical project-root traversal;
 6. rejection of absolute config paths and unsupported schema versions before a configured command runs;
