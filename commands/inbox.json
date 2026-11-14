@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "command": {
-    "id": "shared-ci-filesystem-links-015",
-    "task": "shared-ci.filesystem-links",
-    "issuedAt": "2026-11-14T21:23:00+03:30",
-    "expiresAt": "2026-11-14T21:53:00+03:30"
+    "id": "shared-ci-consumer-template-016",
+    "task": "shared-ci.consumer-template",
+    "issuedAt": "2026-11-14T21:27:00+03:30",
+    "expiresAt": "2026-11-14T21:57:00+03:30"
   }
 }
