@@ -82,7 +82,7 @@ function Invoke-AllowedTask {
       Assert-TrustedCheckout -Path $MotionDeckRoot -ExpectedRemote $motiondeckRemote -ExpectedBranch "main"
       $scriptPath = Join-Path $MotionDeckRoot "scripts/Test-MotionDeckRepository.ps1"
       if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) { throw "MotionDeck validation script not found." }
-      return Invoke-FixedProcess -FileName "pwsh" -Arguments @("-NoProfile","-File",$scriptPath) -WorkingDirectory $MotionDeckRoot -TimeoutSeconds 300
+      return Invoke-FixedProcess -FileName $script:PowerShell7Path -Arguments @("-NoProfile","-File",$scriptPath) -WorkingDirectory $MotionDeckRoot -TimeoutSeconds 300
     }
     "motiondeck.git-status" {
       Assert-TrustedCheckout -Path $MotionDeckRoot -ExpectedRemote $motiondeckRemote -ExpectedBranch "main"
@@ -96,31 +96,31 @@ function Invoke-AllowedTask {
       Assert-TrustedCheckout -Path $SharedCiRoot -ExpectedRemote $sharedCiRemote -ExpectedBranch $Ref
       $scriptPath = Join-Path $SharedCiRoot "tests/Invoke-RunnerSmokeTests.ps1"
       if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) { throw "Shared CI core smoke script not found." }
-      return Invoke-FixedProcess -FileName "pwsh" -Arguments @("-NoProfile","-File",$scriptPath) -WorkingDirectory $SharedCiRoot -TimeoutSeconds 900
+      return Invoke-FixedProcess -FileName $script:PowerShell7Path -Arguments @("-NoProfile","-File",$scriptPath) -WorkingDirectory $SharedCiRoot -TimeoutSeconds 900
     }
     "shared-ci.local-agent-static" {
       Assert-TrustedCheckout -Path $SharedCiRoot -ExpectedRemote $sharedCiRemote -ExpectedBranch $Ref
       $scriptPath = Join-Path $SharedCiRoot "tests/Invoke-LocalAgentStaticTests.ps1"
       if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) { throw "Local agent static test script not found." }
-      return Invoke-FixedProcess -FileName "pwsh" -Arguments @("-NoProfile","-File",$scriptPath) -WorkingDirectory $SharedCiRoot -TimeoutSeconds 60
+      return Invoke-FixedProcess -FileName $script:PowerShell7Path -Arguments @("-NoProfile","-File",$scriptPath) -WorkingDirectory $SharedCiRoot -TimeoutSeconds 60
     }
     "shared-ci.host-safety" {
       Assert-TrustedCheckout -Path $SharedCiRoot -ExpectedRemote $sharedCiRemote -ExpectedBranch $Ref
       $scriptPath = Join-Path $SharedCiRoot "tests/Invoke-RunnerHostSafetyTests.ps1"
       if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) { throw "Runner host safety test script not found." }
-      return Invoke-FixedProcess -FileName "pwsh" -Arguments @("-NoProfile","-File",$scriptPath) -WorkingDirectory $SharedCiRoot -TimeoutSeconds 300
+      return Invoke-FixedProcess -FileName $script:PowerShell7Path -Arguments @("-NoProfile","-File",$scriptPath) -WorkingDirectory $SharedCiRoot -TimeoutSeconds 300
     }
     "shared-ci.filesystem-links" {
       Assert-TrustedCheckout -Path $SharedCiRoot -ExpectedRemote $sharedCiRemote -ExpectedBranch $Ref
       $scriptPath = Join-Path $SharedCiRoot "tests/Invoke-RunnerFilesystemLinkIntegrationTests.ps1"
       if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) { throw "Filesystem link integration test script not found." }
-      return Invoke-FixedProcess -FileName "pwsh" -Arguments @("-NoProfile","-File",$scriptPath,"-EnableFilesystemLinkTests") -WorkingDirectory $SharedCiRoot -TimeoutSeconds 60
+      return Invoke-FixedProcess -FileName $script:PowerShell7Path -Arguments @("-NoProfile","-File",$scriptPath,"-EnableFilesystemLinkTests") -WorkingDirectory $SharedCiRoot -TimeoutSeconds 60
     }
     "shared-ci.consumer-template" {
       Assert-TrustedCheckout -Path $SharedCiRoot -ExpectedRemote $sharedCiRemote -ExpectedBranch $Ref
       $scriptPath = Join-Path $SharedCiRoot "tests/Invoke-ConsumerTemplateTests.ps1"
       if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) { throw "Consumer template test script not found." }
-      return Invoke-FixedProcess -FileName "pwsh" -Arguments @("-NoProfile","-File",$scriptPath) -WorkingDirectory $SharedCiRoot -TimeoutSeconds 60
+      return Invoke-FixedProcess -FileName $script:PowerShell7Path -Arguments @("-NoProfile","-File",$scriptPath) -WorkingDirectory $SharedCiRoot -TimeoutSeconds 60
     }
     default { throw "Task is not allowlisted: $Task" }
   }
@@ -237,6 +237,26 @@ function Invoke-AgentPoll {
 if (-not (Get-Command gh -ErrorAction SilentlyContinue)) { throw "GitHub CLI (gh) is required." }
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) { throw "Git is required." }
 if (-not (Get-Command pwsh -ErrorAction SilentlyContinue)) { throw "PowerShell 7 (pwsh) is required." }
+# Resolve and verify a 64-bit PowerShell 7 executable explicitly. PATH may point to x86 pwsh.
+$script:PowerShell7Path = $null
+$pwshCandidates = @()
+if (-not [string]::IsNullOrWhiteSpace($env:ProgramFiles)) {
+  $pwshCandidates += (Join-Path $env:ProgramFiles "PowerShell/7/pwsh.exe")
+}
+$pwshCandidates += @(Get-Command pwsh.exe -All -ErrorAction SilentlyContinue | ForEach-Object { $_.Source })
+foreach ($candidate in ($pwshCandidates | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)) {
+  if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) { continue }
+  $architectureOutput = & $candidate -NoLogo -NoProfile -NonInteractive -Command "[Environment]::Is64BitProcess" 2>&1
+  $architectureExit = $LASTEXITCODE
+  if ($architectureExit -eq 0 -and (($architectureOutput | Out-String).Trim() -eq "True")) {
+    $script:PowerShell7Path = $candidate
+    break
+  }
+}
+if ([string]::IsNullOrWhiteSpace($script:PowerShell7Path)) {
+  throw "A 64-bit PowerShell 7 executable was not found. Install 64-bit PowerShell 7 (for example, C:\Program Files\PowerShell\7\pwsh.exe) and retry."
+}
+Write-Host "Verified 64-bit PowerShell 7: $script:PowerShell7Path"
 if (-not (Test-Path -LiteralPath $MotionDeckRoot -PathType Container)) { throw "MotionDeckRoot does not exist." }
 if (-not (Test-Path -LiteralPath $SharedCiRoot -PathType Container)) { throw "SharedCiRoot does not exist." }
 $null = Invoke-Gh -Arguments @("auth","status")
