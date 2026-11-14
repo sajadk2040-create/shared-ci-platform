@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "commandId": "agent-bootstrap-static-001",
+  "task": "shared-ci.local-agent-static",
+  "status": "failed",
+  "exitCode": 1,
+  "timedOut": false,
+  "startedAt": "2026-11-14T20:35:16.2857079+03:30",
+  "finishedAt": "2026-11-14T20:35:16.8171142+03:30",
+  "durationSeconds": 0.391,
+  "stdout": "",
+  "stderr": "\u001b[31;1mException: \u001b[0mC:\\Users\\user\\MotionDeckStudio\\shared-ci-platform\\tests\\Invoke-LocalAgentStaticTests.ps1:7\u001b[0m\r\n\u001b[31;1m\u001b[0m\u001b[36;1mLine |\u001b[0m\r\n\u001b[31;1m\u001b[0m\u001b[36;1m\u001b[36;1m   7 | \u001b[0m   if (-not $Condition) { \u001b[36;1mthrow \"FAIL: $Message\"\u001b[0m }\u001b[0m\r\n\u001b[31;1m\u001b[0m\u001b[36;1m\u001b[36;1m\u001b[0m\u001b[36;1m\u001b[0m\u001b[36;1m     | \u001b[31;1m                          ~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\r\n\u001b[31;1m\u001b[0m\u001b[36;1m\u001b[36;1m\u001b[0m\u001b[36;1m\u001b[0m\u001b[36;1m\u001b[31;1m\u001b[31;1m\u001b[36;1m     | \u001b[31;1mFAIL: Initial inbox is empty\u001b[0m\r\n"
+}
