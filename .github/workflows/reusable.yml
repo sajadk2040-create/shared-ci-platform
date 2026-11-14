@@ -1,0 +1,59 @@
+name: Shared CI (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      config-path:
+        description: Path to ci.project.json in the caller repository
+        required: false
+        type: string
+        default: ci.project.json
+      platform-ref:
+        description: Reviewed shared-ci-platform tag or commit to execute
+        required: false
+        type: string
+        default: v0.1.0
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: [self-hosted, Windows, X64, shared-ci]
+    timeout-minutes: 45
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@v4
+        with:
+          path: project
+          persist-credentials: false
+
+      - name: Checkout shared CI platform
+        uses: actions/checkout@v4
+        with:
+          repository: sajadk2040-create/shared-ci-platform
+          ref: ${{ inputs.platform-ref }}
+          path: _shared-ci-platform
+          persist-credentials: false
+
+      - name: Verify PowerShell 7
+        shell: pwsh
+        run: |
+          if ($PSVersionTable.PSVersion.Major -lt 7) {
+            throw "PowerShell 7 or newer is required."
+          }
+
+      - name: Run shared CI
+        shell: pwsh
+        working-directory: project
+        run: |
+          ../_shared-ci-platform/scripts/run.ps1 -ConfigPath "${{ inputs.config-path }}"
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-ci-report-${{ github.run_id }}
+          path: project/artifacts/ci/
+          if-no-files-found: warn
+          retention-days: 14
