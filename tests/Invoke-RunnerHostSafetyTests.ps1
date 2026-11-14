@@ -74,7 +74,7 @@ try {
     Assert-True ($auditSource.Contains('[IO.Directory]::GetParent($current)')) 'isolation audit must inspect every ancestor directory for reparse points'
     Assert-True ($auditSource.Contains('[IO.DirectoryInfo]::new($RunnerRoot).FullName')) 'isolation audit must normalize the runner root without stripping the volume-root separator'
     Assert-True ($auditSource.Contains('$next = $parent.FullName')) 'ancestor traversal must preserve the volume-root path'
-    Assert-True (-not $auditSource.Contains("$parent.FullName.TrimEnd")) 'ancestor traversal must not convert a volume root such as C:\\ into a drive-relative path'
+    Assert-True (-not $auditSource.Contains('$parent.FullName.TrimEnd')) 'ancestor traversal must not convert a volume root such as C:\\ into a drive-relative path'
     Write-Host 'PASS: isolation audit parser and reparse-point safety guard'
 
     $source = Get-Content -LiteralPath $provision -Raw
