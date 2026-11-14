@@ -4,7 +4,7 @@ A portable command-based CI runner for local development and dedicated self-host
 
 ## Status
 
-**Runtime validation in progress.** The initial Windows PowerShell 7 smoke suite has passed. Timeout/process-tree and concurrent-run regression tests have now been added and must pass on the target Windows host before release. The release manifest's `0.1.0` remains a bootstrap target, not a production release. See [release gates](docs/REPOSITORY-BOOTSTRAP.md).
+**Local runtime validation passed.** The expanded eight-group Windows PowerShell 7.6.9 smoke suite passed on commit `068a78027c74d023f13abf00122de14bb1d55461`, including timeout process-tree termination and concurrent report isolation. Re-run it on each release candidate; GitHub Actions/self-hosted workflow validation and security/release gates remain outstanding. The release manifest's `0.1.0` remains a bootstrap target, not a production release. See [release gates](docs/REPOSITORY-BOOTSTRAP.md).
 
 ## Features
 
