@@ -32,9 +32,8 @@ The reusable workflow defaults its `platform-ref` input to `v0.1.0`; therefore c
 ## Remaining work
 
 1. Run PowerShell 7 parser validation on `scripts/run.ps1`.
-2. Run `pwsh -NoProfile -File tests/Invoke-RunnerSmokeTests.ps1` and verify all four smoke-test groups.
-3. Run intentional failure fixture; verify non-zero runner exit and recorded step exit code 23.
-4. Add invalid-config coverage and execute the Windows junction test and review any remaining symlink/reparse-point edge cases.
+2. Run `pwsh -NoProfile -File tests/Invoke-RunnerSmokeTests.ps1` on Windows PowerShell 7 and verify all six groups, including the junction case.
+3. Review the reparse-point checks for time-of-check/time-of-use races; the current checks reject existing reparse-point components but do not eliminate concurrent filesystem replacement.
 5. Parse the reusable workflow YAML and review permissions/checkout behavior.
 6. Decide public/private access and register a dedicated least-privilege self-hosted runner.
 7. Publish `v0.1.0` only after all applicable gates pass.
