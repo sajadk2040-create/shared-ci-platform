@@ -63,6 +63,7 @@ try {
     Assert-True ($plan.ExitCode -eq 0) ("plan-only invocation should succeed. Output: " + $plan.Output)
     Assert-True (-not (Test-Path -LiteralPath $target)) 'plan-only must not create runner directory'
     Assert-True ($plan.Output.Contains('"Mode": "Plan only"')) 'plan output must identify Plan only mode'
+    Assert-True ($plan.Output.Contains('"ParentAclAssessment"')) 'plan output must include read-only parent ACL assessment'
     $badName = Invoke-PwshCapture -Arguments @('-File',$provision,'-AccountName','invalid account','-RunnerRoot',$target)
     Assert-True ($badName.ExitCode -ne 0) 'invalid account name must be rejected'
     $badPath = Invoke-PwshCapture -Arguments @('-File',$provision,'-AccountName',$account,'-RunnerRoot',(Join-Path $testRoot 'inside-profile'))
