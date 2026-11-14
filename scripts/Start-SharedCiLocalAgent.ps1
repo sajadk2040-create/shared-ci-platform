@@ -134,7 +134,7 @@ function Publish-Response {
 function Invoke-AgentPoll {
   $rawContent = Invoke-Gh -Arguments @("api","repos/$Repository/contents/commands/inbox.json?ref=$Ref","--jq",".content")
   $jsonText = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(($rawContent -replace "\s","")))
-  $inbox = $jsonText | ConvertFrom-Json
+  $inbox = $jsonText | ConvertFrom-Json -DateKind String
   if ($inbox.schemaVersion -ne 1) { throw "Unsupported inbox schemaVersion." }
   if ($null -eq $inbox.command) { Write-Host "Inbox empty; waiting."; return }
   $command = $inbox.command
@@ -142,8 +142,10 @@ function Invoke-AgentPoll {
   $task = [string]$command.task
   if ($id -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$') { throw "Invalid command ID." }
   if ([string]::IsNullOrWhiteSpace($task)) { throw "Command task is missing." }
-  $issuedAt = [DateTimeOffset]::Parse([string]$command.issuedAt)
-  $expiresAt = [DateTimeOffset]::Parse([string]$command.expiresAt)
+  $invariantCulture = [Globalization.CultureInfo]::InvariantCulture
+  $roundtripStyle = [Globalization.DateTimeStyles]::RoundtripKind
+  $issuedAt = [DateTimeOffset]::Parse([string]$command.issuedAt, $invariantCulture, $roundtripStyle)
+  $expiresAt = [DateTimeOffset]::Parse([string]$command.expiresAt, $invariantCulture, $roundtripStyle)
   $now = [DateTimeOffset]::Now
   if ($issuedAt -gt $now.AddMinutes(5)) { throw "Command issue time is too far in the future." }
   if ($expiresAt -le $now -or $expiresAt -le $issuedAt -or $expiresAt -gt $issuedAt.AddHours(1)) { throw "Command is expired or has an invalid lifetime." }
