@@ -33,7 +33,7 @@ Windows may show the standard PowerShell ShouldProcess confirmation as an additi
 - Apply plus the exact confirmation string and administrator elevation are required for changes.
 - Existing local accounts and existing target directories are never modified or reused.
 - If a failure occurs after a partial change, the script reports which resources this invocation created and deliberately does not perform an automatic rollback. Inspect locally before retrying.
-- ACLs are set on the dedicated directory only. Parent directory creation, if needed, is separate and its ACL is not changed.
+- ACLs are set on the dedicated directory only. Parent directory creation, if needed, is separate and its ACL is not changed. Parent ancestors are inspected read-only; the script does not repair or change their ACLs.
 - This is host preparation, not a security sandbox. A dedicated VM remains preferable.
 - The account is not yet granted Log on as a service. That right, runner registration, service installation, runner labels and first workflow execution are separate approval/review gates.
 - Do not use this account for interactive development. Do not run untrusted fork pull requests on a persistent privileged runner.
