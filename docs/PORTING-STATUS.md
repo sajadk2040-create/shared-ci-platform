@@ -1,6 +1,6 @@
 # Standalone repository import status
 
-**Status:** expanded eight-group Windows PowerShell 7.6.9 runtime smoke suite passed on `068a78027c74d023f13abf00122de14bb1d55461`. GitHub workflow validation, runner hardening and release gates remain outstanding.
+**Status:** expanded eight-group Windows PowerShell 7.6.9 runtime smoke suite passed on `068a78027c74d023f13abf00122de14bb1d55461`. The core runtime is validated at the recorded commit; latest host-isolation audit and ACL harness additions are authored but await a fresh Windows execution. GitHub workflow validation, runner provisioning and release gates remain outstanding.
 
 ## Imported from MotionDeck staging
 
@@ -64,3 +64,14 @@ No GitHub Actions workflow was triggered, no self-hosted runner was registered, 
 - Reviewed its least-privilege `contents: read` permission, separate caller/platform checkouts, `persist-credentials: false` on both checkouts, PowerShell 7 gate, and dedicated self-hosted Windows/X64/shared-ci labels.
 - Corrected the runner invocation to force `-OutputDirectory artifacts/ci`, ensuring the artifact upload step targets the same directory even when a consumer config chooses a different local reportDirectory.
 - No Actions workflow was dispatched. The workflow still needs a secured registered runner and a manual end-to-end run before release.
+
+
+## Runner host isolation audit — latest work, not yet runtime-validated (2026-11-14)
+
+- Fixed isolation-audit root normalization to preserve Windows volume-root semantics using `DirectoryInfo.FullName`.
+- Added `scripts/SharedCiAclRules.ps1` and delegated the audit's ACL decision to a normalized, reusable rule-assessment function.
+- Added synthetic harness scenarios for the exact expected ACL, extra principal, Deny ACE, missing principal, wrong rights and inherited ACE. Added source checks for ancestor reparse-point traversal and volume-root preservation.
+- Updated `docs/RUNNER-HOST-ISOLATION-AUDIT.md`, `docs/RUNNER-HOST-SAFETY-TESTS.md`, `docs/LOCAL-VALIDATION.md` and README.
+- Latest relevant commits: audit path normalization `5d08841`; ACL helper `d217020`; audit integration `c3220c2`; harness `93d23e6`, `bc34121`, `1c4c4a5`; test guide `0bc15ca`.
+- These latest changes have not been pulled or run on Windows. The previously recorded three-group host safety PASS applies only to the older harness. Do not report the current five-group suite as passed.
+- No local account, password, ACL, runner registration or service was changed. The unrelated `nti-national-traffic-intelligence` runner remains out of scope and untouched. Do not publish `v0.1.0` yet.
