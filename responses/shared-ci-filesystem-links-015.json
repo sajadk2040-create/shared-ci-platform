@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "commandId": "shared-ci-filesystem-links-015",
+  "task": "shared-ci.filesystem-links",
+  "status": "passed",
+  "exitCode": 0,
+  "timedOut": false,
+  "startedAt": "2026-11-14T21:26:34.3509669+03:30",
+  "finishedAt": "2026-11-14T21:26:34.8740465+03:30",
+  "durationSeconds": 0.38,
+  "stdout": "PASS: actual Windows junction is identified as a reparse point\r\nSKIP: symbolic-link creation is unavailable in this environment: Administrator privilege required for this operation.\r\nPASS: filesystem link integration tests\r\n",
+  "stderr": ""
+}
