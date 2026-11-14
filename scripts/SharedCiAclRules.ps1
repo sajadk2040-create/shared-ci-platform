@@ -36,19 +36,18 @@ function Get-SharedCiParentAclAssessment {
     param([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$Path)
 
     $broadSids = @('S-1-1-0','S-1-5-11','S-1-5-32-545','S-1-5-4','S-1-5-2')
-    $rightsType = [Security.AccessControl.FileSystemRights]
     $writeMask = [int64](
-        $rightsType::WriteData -bor
-        $rightsType::AppendData -bor
-        $rightsType::CreateDirectories -bor
-        $rightsType::WriteExtendedAttributes -bor
-        $rightsType::WriteAttributes -bor
-        $rightsType::DeleteSubdirectoriesAndFiles -bor
-        $rightsType::Delete -bor
-        $rightsType::ChangePermissions -bor
-        $rightsType::TakeOwnership -bor
-        $rightsType::Modify -bor
-        $rightsType::FullControl
+        [Security.AccessControl.FileSystemRights]::WriteData -bor
+        [Security.AccessControl.FileSystemRights]::AppendData -bor
+        [Security.AccessControl.FileSystemRights]::CreateDirectories -bor
+        [Security.AccessControl.FileSystemRights]::WriteExtendedAttributes -bor
+        [Security.AccessControl.FileSystemRights]::WriteAttributes -bor
+        [Security.AccessControl.FileSystemRights]::DeleteSubdirectoriesAndFiles -bor
+        [Security.AccessControl.FileSystemRights]::Delete -bor
+        [Security.AccessControl.FileSystemRights]::ChangePermissions -bor
+        [Security.AccessControl.FileSystemRights]::TakeOwnership -bor
+        [Security.AccessControl.FileSystemRights]::Modify -bor
+        [Security.AccessControl.FileSystemRights]::FullControl
     )
 
     $candidate = [IO.Path]::GetFullPath($Path)
