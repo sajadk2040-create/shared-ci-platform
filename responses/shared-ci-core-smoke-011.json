@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "commandId": "shared-ci-core-smoke-011",
+  "task": "shared-ci.core-smoke",
+  "status": "passed",
+  "exitCode": 0,
+  "timedOut": false,
+  "startedAt": "2026-11-14T21:02:19.0070992+03:30",
+  "finishedAt": "2026-11-14T21:02:28.4297872+03:30",
+  "durationSeconds": 9.292,
+  "stdout": "PASS: PowerShell parser validation\r\nCI status: passed\r\nReport: C:\\Users\\user\\AppData\\Local\\Temp\\shared-ci-smoke-e285672a259249969f172584fcaecc97\\project\\artifacts\\pass\\14050823-210219-730-72a5becb.md\r\nJSON: C:\\Users\\user\\AppData\\Local\\Temp\\shared-ci-smoke-e285672a259249969f172584fcaecc97\\project\\artifacts\\pass\\14050823-210219-730-72a5becb.json\r\nLog: C:\\Users\\user\\AppData\\Local\\Temp\\shared-ci-smoke-e285672a259249969f172584fcaecc97\\project\\artifacts\\pass\\14050823-210219-730-72a5becb.log\r\nCI status: failed\r\nReport: C:\\Users\\user\\AppData\\Local\\Temp\\shared-ci-smoke-e285672a259249969f172584fcaecc97\\project\\artifacts\\fail\\14050823-210220-476-060fdc1a.md\r\nJSON: C:\\Users\\user\\AppData\\Local\\Temp\\shared-ci-smoke-e285672a259249969f172584fcaecc97\\project\\artifacts\\fail\\14050823-210220-476-060fdc1a.json\r\nLog: C:\\Users\\user\\AppData\\Local\\Temp\\shared-ci-smoke-e285672a259249969f172584fcaecc97\\project\\artifacts\\fail\\14050823-210220-476-060fdc1a.log\r\nCI status: failed\r\nReport: C:\\Users\\user\\AppData\\Local\\Temp\\shared-ci-smoke-e285672a259249969f172584fcaecc97\\project\\artifacts\\timeout\\14050823-210222-839-43c4fd94.md\r\nJSON: C:\\Users\\user\\AppData\\Local\\Temp\\shared-ci-smoke-e285672a259249969f172584fcaecc97\\project\\artifacts\\timeout\\14050823-210222-839-43c4fd94.json\r\nLog: C:\\Users\\user\\AppData\\Local\\Temp\\shared-ci-smoke-e285672a259249969f172584fcaecc97\\project\\artifacts\\timeout\\14050823-210222-839-43c4fd94.log\r\nPASS: runner smoke tests (8 groups; includes timeout tree termination and parallel report isolation)\r\nTemporary test workspace: C:\\Users\\user\\AppData\\Local\\Temp\\shared-ci-smoke-e285672a259249969f172584fcaecc97\r\n",
+  "stderr": ""
+}
