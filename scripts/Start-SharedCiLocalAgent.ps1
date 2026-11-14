@@ -104,6 +104,24 @@ function Invoke-AllowedTask {
       if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) { throw "Local agent static test script not found." }
       return Invoke-FixedProcess -FileName "pwsh" -Arguments @("-NoProfile","-File",$scriptPath) -WorkingDirectory $SharedCiRoot -TimeoutSeconds 60
     }
+    "shared-ci.host-safety" {
+      Assert-TrustedCheckout -Path $SharedCiRoot -ExpectedRemote $sharedCiRemote -ExpectedBranch $Ref
+      $scriptPath = Join-Path $SharedCiRoot "tests/Invoke-RunnerHostSafetyTests.ps1"
+      if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) { throw "Runner host safety test script not found." }
+      return Invoke-FixedProcess -FileName "pwsh" -Arguments @("-NoProfile","-File",$scriptPath) -WorkingDirectory $SharedCiRoot -TimeoutSeconds 300
+    }
+    "shared-ci.filesystem-links" {
+      Assert-TrustedCheckout -Path $SharedCiRoot -ExpectedRemote $sharedCiRemote -ExpectedBranch $Ref
+      $scriptPath = Join-Path $SharedCiRoot "tests/Invoke-RunnerFilesystemLinkIntegrationTests.ps1"
+      if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) { throw "Filesystem link integration test script not found." }
+      return Invoke-FixedProcess -FileName "pwsh" -Arguments @("-NoProfile","-File",$scriptPath,"-EnableFilesystemLinkTests") -WorkingDirectory $SharedCiRoot -TimeoutSeconds 60
+    }
+    "shared-ci.consumer-template" {
+      Assert-TrustedCheckout -Path $SharedCiRoot -ExpectedRemote $sharedCiRemote -ExpectedBranch $Ref
+      $scriptPath = Join-Path $SharedCiRoot "tests/Invoke-ConsumerTemplateTests.ps1"
+      if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) { throw "Consumer template test script not found." }
+      return Invoke-FixedProcess -FileName "pwsh" -Arguments @("-NoProfile","-File",$scriptPath) -WorkingDirectory $SharedCiRoot -TimeoutSeconds 60
+    }
     default { throw "Task is not allowlisted: $Task" }
   }
 }
@@ -162,7 +180,10 @@ function Invoke-AgentPoll {
     "motiondeck.git-status",
     "motiondeck.current-commit",
     "shared-ci.core-smoke",
-    "shared-ci.local-agent-static"
+    "shared-ci.local-agent-static",
+    "shared-ci.host-safety",
+    "shared-ci.filesystem-links",
+    "shared-ci.consumer-template"
   )
   $taskInvalid = ($task.Length -gt 64 -or $task -notin $allowedTasks)
   $responseTask = if ($task.Length -gt 64) { $task.Substring(0,64) } else { $task }
