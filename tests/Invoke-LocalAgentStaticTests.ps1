@@ -2,15 +2,19 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $agentPath = Join-Path $repoRoot "scripts/Start-SharedCiLocalAgent.ps1"
 $inboxPath = Join-Path $repoRoot "commands/inbox.json"
+$testPath = $PSCommandPath
 
 function Assert-True([bool]$Condition, [string]$Message) {
   if (-not $Condition) { throw "FAIL: $Message" }
 }
 
-$tokens = $null
-$parseErrors = $null
-[void][System.Management.Automation.Language.Parser]::ParseFile($agentPath, [ref]$tokens, [ref]$parseErrors)
-Assert-True ($parseErrors.Count -eq 0) "Agent PowerShell syntax parses"
+# Parse both the agent and this test file before running assertions.
+foreach ($path in @($agentPath, $testPath)) {
+  $tokens = $null
+  $parseErrors = $null
+  [void][System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$parseErrors)
+  Assert-True ($parseErrors.Count -eq 0) "PowerShell syntax parses: $([IO.Path]::GetFileName($path))"
+}
 
 $source = Get-Content -LiteralPath $agentPath -Raw
 Assert-True ($source -notmatch '(?i)\bInvoke-Expression\b') "No Invoke-Expression"
@@ -37,10 +41,7 @@ Assert-True ($inbox.schemaVersion -eq 1) "Inbox schema version is 1"
 if ($null -ne $inbox.command) {
   Assert-True (-not [string]::IsNullOrWhiteSpace([string]$inbox.command.id)) "Inbox command has an ID"
   Assert-True (-not [string]::IsNullOrWhiteSpace([string]$inbox.command.task)) "Inbox command has a task"
-  Assert-True ($inbox.command.task -match '^(motiondeck\.(repository-validation|git-status|current-commit)|shared-ci\.(core-smoke|local-agent-static))
-
-Write-Host "PASS: local agent static safety tests"
-) "Inbox task is allowlisted"
+  Assert-True ($inbox.command.task -match '^(motiondeck\.(repository-validation|git-status|current-commit)|shared-ci\.(core-smoke|local-agent-static))$') "Inbox task is allowlisted"
   Assert-True (-not [string]::IsNullOrWhiteSpace([string]$inbox.command.issuedAt)) "Inbox command has issuedAt"
   Assert-True (-not [string]::IsNullOrWhiteSpace([string]$inbox.command.expiresAt)) "Inbox command has expiresAt"
 }
