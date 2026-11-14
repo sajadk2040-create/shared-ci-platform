@@ -9,7 +9,8 @@
     "operatingSystem": "Windows"
   },
   "entrypoint": "scripts/run.ps1",
-  "sourceStagingPath": "tooling/shared-ci",
+  "sourceStagingPath": ".",
   "intendedRepository": "sajadk2040-create/shared-ci-platform",
-  "releaseStatus": "bootstrap-not-yet-runtime-validated"
+  "releaseStatus": "imported-bootstrap-not-yet-runtime-validated",
+  "repository": "https://github.com/sajadk2040-create/shared-ci-platform"
 }
