@@ -9,7 +9,7 @@ The script scripts/Prepare-SharedCiRunnerHost.ps1 is a guarded, Windows-only pro
 - Directory ACL: protected from inheritance; Full Control for SYSTEM, local Administrators and the newly created service account.
 - Password: entered interactively as a SecureString; minimum 16 characters; never placed in script arguments, output, files or logs.
 
-The script refuses to continue if the account or target directory already exists, if the target is under the current user's profile, if the parent is a reparse point, or if the path does not match the dedicated drive:\GitHubRunners\name layout. It never reuses the existing runner under a developer profile.
+The script refuses to continue if the account or target directory already exists, if the target is under the current user's profile, if the path does not match the dedicated drive layout, or if the parent-path preflight is unsafe. Before Apply can create anything, it inventories the target parent and every existing ancestor up to the volume root. It fails closed on reparse-point ancestors, inspection errors, or write-capable Allow ACEs for Everyone, Authenticated Users, BUILTIN Users, Interactive, or Network. The plan-only JSON includes this read-only assessment. This conservative check does not calculate effective access through nested group membership and is not a complete ACL security review. It never reuses the existing runner under a developer profile.
 
 ## Step 1 — review only
 
