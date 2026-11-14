@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "command": {
-    "id": "shared-ci-consumer-template-016",
-    "task": "shared-ci.consumer-template",
-    "issuedAt": "2026-11-14T21:27:00+03:30",
-    "expiresAt": "2026-11-14T21:57:00+03:30"
+    "id": "shared-ci-core-smoke-017",
+    "task": "shared-ci.core-smoke",
+    "issuedAt": "2026-11-14T21:29:00+03:30",
+    "expiresAt": "2026-11-14T21:59:00+03:30"
   }
 }
