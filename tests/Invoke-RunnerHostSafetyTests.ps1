@@ -71,6 +71,7 @@ try {
     $auditSource = Get-Content -LiteralPath $audit -Raw
     Assert-True ($auditSource.Contains('[IO.FileAttributes]::ReparsePoint')) 'isolation audit must reject a reparse-point runner root'
     Assert-True ($auditSource.Contains('must not be a reparse point')) 'reparse-point rejection must fail with an explicit explanation'
+    Assert-True ($auditSource.Contains('[IO.Directory]::GetParent($current)')) 'isolation audit must inspect every ancestor directory for reparse points'
     Write-Host 'PASS: isolation audit parser and reparse-point safety guard'
 
     $source = Get-Content -LiteralPath $provision -Raw
@@ -88,7 +89,7 @@ try {
     Write-Host 'PASS: provisioning source safety guards'
     Write-Host 'NOTE: no account creation, password setting, ACL mutation, runner registration, or service installation was exercised.'
     $passed = $true
-    Write-Host 'PASS: runner host safety tests (3 groups)'
+    Write-Host 'PASS: runner host safety tests (4 groups)'
 }
 catch {
     Write-Host ("FAILED: runner host safety tests — " + $_)
