@@ -14,7 +14,7 @@ if (-not (Test-Path -LiteralPath $root -PathType Container)) { throw "RunnerRoot
 $current = $root
 while ($current) {
     $currentItem = Get-Item -LiteralPath $current -Force -ErrorAction Stop
-    if (($currentItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+    if (Test-SharedCiReparsePointAttributes -Attributes $currentItem.Attributes) {
         throw "RunnerRoot path or one of its ancestors is a reparse point: $current"
     }
     $parent = [IO.Directory]::GetParent($current)
