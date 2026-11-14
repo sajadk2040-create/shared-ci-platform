@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "commandId": "agent-response-decision-tests-009",
+  "task": "shared-ci.local-agent-static",
+  "status": "failed",
+  "exitCode": 1,
+  "timedOut": false,
+  "startedAt": "2026-11-14T20:59:02.8438918+03:30",
+  "finishedAt": "2026-11-14T20:59:03.3522150+03:30",
+  "durationSeconds": 0.38,
+  "stdout": "",
+  "stderr": "\u001b[31;1mException: \u001b[0mC:\\Users\\user\\MotionDeckStudio\\shared-ci-platform\\tests\\Invoke-LocalAgentStaticTests.ps1:8\u001b[0m\r\n\u001b[31;1m\u001b[0m\u001b[36;1mLine |\u001b[0m\r\n\u001b[31;1m\u001b[0m\u001b[36;1m\u001b[36;1m   8 | \u001b[0m   if (-not $Condition) { \u001b[36;1mthrow \"FAIL: $Message\"\u001b[0m }\u001b[0m\r\n\u001b[31;1m\u001b[0m\u001b[36;1m\u001b[36;1m\u001b[0m\u001b[36;1m\u001b[0m\u001b[36;1m     | \u001b[31;1m                          ~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\r\n\u001b[31;1m\u001b[0m\u001b[36;1m\u001b[36;1m\u001b[0m\u001b[36;1m\u001b[0m\u001b[36;1m\u001b[31;1m\u001b[31;1m\u001b[36;1m     | \u001b[31;1mFAIL: Existing response is recognized only after a successful lookup\u001b[0m\r\n"
+}
