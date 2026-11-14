@@ -9,10 +9,9 @@ on:
         type: string
         default: ci.project.json
       platform-ref:
-        description: Reviewed shared-ci-platform tag or commit to execute
-        required: false
+        description: Immutable reviewed shared-ci-platform commit SHA to execute
+        required: true
         type: string
-        default: 1414e5532927dd9818a1635c0408ab69883d2dbe
 
 permissions:
   contents: read
