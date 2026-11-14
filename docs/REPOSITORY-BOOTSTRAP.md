@@ -24,6 +24,16 @@ The reusable workflow must be copied from the MotionDeck root `.github/workflows
 3. Register a dedicated runner with the `shared-ci` label before enabling dispatch.
 4. Use protected branches and trusted code only on this runner.
 
+## Automated smoke test harness
+
+With PowerShell 7 installed, run the self-contained harness from the repository root:
+
+```powershell
+pwsh -NoProfile -File tests/Invoke-RunnerSmokeTests.ps1
+```
+
+It provisions a temporary isolated project and checks successful execution/reporting, stdout and stderr capture, preservation of arguments with spaces and quotes, intentional child exit code 23, and rejection of lexical path traversal and absolute config paths. The harness has been committed but is not yet runtime-validated. It does not cover symlink/reparse-point traversal.
+
 ## Smoke fixture
 
 See `examples/smoke-project/README.md`. It includes a successful command fixture and an intentional exit-code-23 fixture. The expected results are documented but have not yet been executed.
