@@ -1,6 +1,6 @@
 # Standalone repository import status
 
-**Status:** source import completed; runtime validation and release are pending.
+**Status:** source import completed; MIT license added; workflow input handling hardened; runtime validation and release are pending.
 
 ## Imported from MotionDeck staging
 
@@ -19,6 +19,11 @@ The platform's root layout is now:
 `RELEASE-MANIFEST.json` currently records version `0.1.0` as an imported bootstrap state. No `v0.1.0` release tag should be published until the release gates in `docs/REPOSITORY-BOOTSTRAP.md` pass.
 
 The reusable workflow defaults its `platform-ref` input to `v0.1.0`; therefore consumer workflows must remain disabled until that tag exists and the runner is registered.
+
+## Completed follow-up
+
+- Added the MIT License at repository root and linked it from README.
+- Hardened the reusable workflow: the caller-provided config path is now passed through an environment variable instead of interpolated directly into a PowerShell command string.
 
 ## Remaining work
 
