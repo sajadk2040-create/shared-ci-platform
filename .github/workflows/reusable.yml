@@ -53,6 +53,11 @@ jobs:
         run: |
           pwsh -NoProfile -File _shared-ci-platform/tests/Invoke-RunnerHostSafetyTests.ps1
 
+      - name: Validate real Windows filesystem links
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File _shared-ci-platform/tests/Invoke-RunnerFilesystemLinkIntegrationTests.ps1 -EnableFilesystemLinkTests
+
       - name: Run shared CI
         shell: pwsh
         working-directory: project
