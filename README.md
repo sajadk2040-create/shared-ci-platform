@@ -41,6 +41,7 @@ The runner does not install dependencies or access the network unless an explici
 - [Self-hosted runner security review](docs/SELF-HOSTED-RUNNER-SECURITY-REVIEW.md)
 - [Read-only runner host preflight](docs/RUNNER-HOST-PREFLIGHT.md)
 - [Guarded runner host provisioning](docs/RUNNER-HOST-PROVISIONING.md)
+- [Runner host safety tests](docs/RUNNER-HOST-SAFETY-TESTS.md)
 - [Smoke project](examples/smoke-project/README.md)
 - [Release manifest](RELEASE-MANIFEST.json)
 
