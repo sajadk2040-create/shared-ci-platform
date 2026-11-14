@@ -2,13 +2,11 @@
 
 ## Consumer repository
 
-A project opts in by adding `ci.project.json` at its root and a tiny caller workflow:
+A consumer uses the reusable workflow from this repository and must pass an immutable platform revision explicitly:
 
 ```yaml
 name: CI
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -16,10 +14,15 @@ permissions:
 
 jobs:
   shared:
-    uses: sajadk2040-create/shared-ci-platform/.github/workflows/reusable.yml@v0.1.0
+    uses: sajadk2040-create/shared-ci-platform/.github/workflows/reusable.yml@<reviewed-workflow-commit-sha>
+    with:
+      config-path: ci.project.json
+      platform-ref: <same-reviewed-workflow-commit-sha>
 ```
 
-The example assumes the `v0.1.0` release tag has been published. Until the PowerShell runtime and security release gates pass and that tag exists, do not enable this caller workflow. Pin the workflow to a reviewed release tag or immutable commit SHA.
+Replace both placeholders with the same reviewed 40-character commit SHA. The workflow intentionally has no default for `platform-ref`; callers cannot silently track a moving branch. The example uses manual dispatch until a dedicated isolated runner is secured and registered. Do not add fork pull-request triggers or enable automatic triggers on a persistent self-hosted runner.
+
+The workflow runs the platform core smoke suite, non-provisioning host-safety suite, and real Windows filesystem-link integration suite before executing the consumer config. The link test creates a unique temporary fixture, requires a real junction, and reports SKIP if symbolic-link creation is not permitted.
 
 ## Presets and schema
 
@@ -41,4 +44,4 @@ Commands are invoked directly without a shell, so shell metacharacters in argume
 
 ## Current constraints
 
-The initial runner implementation targets PowerShell 7 on Windows. The workflow is deliberately pinned to a custom self-hosted label and must not be enabled before a runner with that label is online. Do not use this workflow with fork pull requests or other untrusted code.
+The initial runner implementation targets PowerShell 7 on Windows. The reusable workflow requires the dedicated self-hosted labels `self-hosted`, `Windows`, `X64`, and `shared-ci`. Do not use this workflow with fork pull requests or other untrusted code.
