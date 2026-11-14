@@ -120,8 +120,17 @@ function Protect-Output {
 
 function Test-ResponseExists {
   param([string]$Path)
-  $null = & gh api "repos/$Repository/contents/${Path}?ref=$Ref" --jq ".sha" 2>$null
-  return ($LASTEXITCODE -eq 0)
+  # Only an explicit GitHub 404 means the response is absent. Authentication,
+  # rate-limit, network, and server failures must stop processing (fail closed).
+  $output = & gh api "repos/$Repository/contents/${Path}?ref=$Ref" --jq ".sha" 2>&1
+  $code = $LASTEXITCODE
+  if ($code -eq 0) { return $true }
+  $diagnostic = ($output | Out-String).Trim()
+  if ($diagnostic -match '(?i)\\bNot Found\\s*\\(HTTP 404\\)\\b|\\bHTTP(?:/\\d(?:\\.\\d)?)?\\s+404\\b') {
+    return $false
+  }
+  $safeDiagnostic = Protect-Output $diagnostic
+  throw "Could not verify whether response '$Path' already exists (gh exit $code): $safeDiagnostic"
 }
 
 function Publish-Response {
