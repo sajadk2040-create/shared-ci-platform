@@ -11,6 +11,7 @@ if (-not (Test-Path -LiteralPath $runnerSource -PathType Leaf)) {
   throw "Runner not found: $runnerSource"
 }
 
+$testPassed = $false
 $testRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("shared-ci-smoke-" + [guid]::NewGuid().ToString("N"))
 $projectRoot = Join-Path $testRoot "project"
 $platformRoot = Join-Path $testRoot "platform"
@@ -123,15 +124,16 @@ try {
 
   Write-Host "PASS: runner smoke tests (4 groups)"
   Write-Host "Temporary test workspace: $testRoot"
+  $testPassed = $true
 }
 catch {
-  Write-Error $_
+  Write-Host "ERROR: $_"
   Write-Host "FAILED: runner smoke tests"
   Write-Host "Temporary test workspace retained for inspection: $testRoot"
   throw
 }
 finally {
-  if ($?) {
+  if ($testPassed) {
     Remove-Item -LiteralPath $testRoot -Recurse -Force -ErrorAction SilentlyContinue
   }
 }
