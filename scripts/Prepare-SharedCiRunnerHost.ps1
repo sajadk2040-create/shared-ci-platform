@@ -53,7 +53,7 @@ $createdDirectory = $false
 try {
     $password = Read-Host "Enter a strong password for local account $AccountName" -AsSecureString
     if ($null -eq $password -or $password.Length -lt 16) { throw 'Password must contain at least 16 characters.' }
-    if (-not (Test-Path -LiteralPath $parentPath -PathType Container)) { New-Item -Path $parentPath -ItemType Directory -Force | Out-Null }
+    if (-not (Test-Path -LiteralPath $parentPath -PathType Container)) { throw 'The dedicated parent directory must exist before Apply. Create and secure it manually as an administrator, then rerun the read-only preflight.' }
     New-Item -Path $targetRoot -ItemType Directory -ErrorAction Stop | Out-Null
     $createdDirectory = $true
     $user = New-LocalUser -Name $AccountName -Password $password -Description 'Dedicated least-privilege account for Shared CI Platform runner; not yet registered.'
