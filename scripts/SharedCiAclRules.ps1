@@ -31,10 +31,13 @@ function Test-SharedCiReparsePointAttributes {
     return (($Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)
 }
 
-function Get-SharedCiParentAclAssessment {
+function Test-SharedCiBroadPrincipalWriteRule {
     [CmdletBinding()]
-    param([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$Path)
-
+    param(
+        [Parameter(Mandatory=$true)][string]$PrincipalSid,
+        [Parameter(Mandatory=$true)][Security.AccessControl.FileSystemRights]$Rights,
+        [Parameter(Mandatory=$true)][Security.AccessControl.AccessControlType]$AccessControlType
+    )
     $broadSids = @('S-1-1-0','S-1-5-11','S-1-5-32-545','S-1-5-4','S-1-5-2')
     $writeMask = [int64](
         [Security.AccessControl.FileSystemRights]::WriteData -bor
@@ -49,6 +52,16 @@ function Get-SharedCiParentAclAssessment {
         [Security.AccessControl.FileSystemRights]::Modify -bor
         [Security.AccessControl.FileSystemRights]::FullControl
     )
+    return (
+        $AccessControlType -eq [Security.AccessControl.AccessControlType]::Allow -and
+        $PrincipalSid -in $broadSids -and
+        (([int64]$Rights -band $writeMask) -ne 0)
+    )
+}
+
+function Get-SharedCiParentAclAssessment {
+    [CmdletBinding()]
+    param([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$Path)
 
     $candidate = [IO.Path]::GetFullPath($Path)
     while (-not (Test-Path -LiteralPath $candidate -PathType Container)) {
@@ -73,10 +86,7 @@ function Get-SharedCiParentAclAssessment {
             $rules = $acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier])
             foreach ($rule in $rules) {
                 $sid = $rule.IdentityReference.Value
-                $rights = [int64]$rule.FileSystemRights
-                if ($rule.AccessControlType -eq [Security.AccessControl.AccessControlType]::Allow -and
-                    $sid -in $broadSids -and
-                    (($rights -band $writeMask) -ne 0)) {
+                if (Test-SharedCiBroadPrincipalWriteRule -PrincipalSid $sid -Rights $rule.FileSystemRights -AccessControlType $rule.AccessControlType) {
                     $broadWrite += [pscustomobject]@{
                         Ancestor = $current
                         PrincipalSid = $sid
