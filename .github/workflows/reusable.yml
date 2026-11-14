@@ -46,8 +46,10 @@ jobs:
       - name: Run shared CI
         shell: pwsh
         working-directory: project
+        env:
+          SHARED_CI_CONFIG_PATH: ${{ inputs.config-path }}
         run: |
-          ../_shared-ci-platform/scripts/run.ps1 -ConfigPath "${{ inputs.config-path }}"
+          ../_shared-ci-platform/scripts/run.ps1 -ConfigPath $env:SHARED_CI_CONFIG_PATH
 
       - name: Upload reports
         if: always()
