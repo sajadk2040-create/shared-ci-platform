@@ -95,8 +95,9 @@ foreach ($step in $config.steps) {
   $started = Get-Date
   $stdoutFile = Join-Path $outDir "$runId-step-$($results.Count + 1).out"
   $stderrFile = Join-Path $outDir "$runId-step-$($results.Count + 1).err"
-  $displayArgs = ($argsList | ForEach-Object { if ($_ -match '[\s"]') { '"' + ($_ -replace '"','\"') + '"' } else { $_ } }) -join " "
-  Add-Content -LiteralPath $logPath -Value "[$($started.ToString('o'))] START $($step.name): $($step.command) $displayArgs"
+  # Arguments may contain credentials or other sensitive values. Never copy them
+  # into logs or reports; they are still passed unchanged to the child process.
+  Add-Content -LiteralPath $logPath -Value "[$($started.ToString('o'))] START $($step.name): $($step.command) (argumentCount=$($argsList.Count))"
 
   try {
     # ProcessStartInfo.ArgumentList preserves argument boundaries (including spaces)
@@ -131,7 +132,7 @@ foreach ($step in $config.steps) {
   $results.Add([pscustomobject]@{
     name = [string]$step.name
     command = [string]$step.command
-    arguments = $argsList
+    argumentCount = [int]$argsList.Count
     workingDirectory = [string]$stepDir
     exitCode = [int]$exitCode
     status = if ($success) { "passed" } else { "failed" }
