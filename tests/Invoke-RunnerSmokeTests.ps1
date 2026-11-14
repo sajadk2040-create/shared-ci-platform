@@ -73,6 +73,8 @@ try {
   $passReport = Get-Content -LiteralPath $jsonReport.FullName -Raw | ConvertFrom-Json
   Assert-True ($passReport.status -eq "passed") "success report status should be passed"
   Assert-True ($passReport.steps[0].exitCode -eq 0) "success step exit code should be 0"
+  Assert-True ((Get-ChildItem -LiteralPath $passReports -Filter "*.md").Count -eq 1) "Markdown report should exist"
+  Assert-True ((Get-ChildItem -LiteralPath $passReports -Filter "*.log").Count -eq 1) "execution log should exist"
   $stdoutFile = Join-Path $passReports $passReport.steps[0].stdout
   $stderrFile = Join-Path $passReports $passReport.steps[0].stderr
   Assert-True ((Get-Content -LiteralPath $stdoutFile -Raw) -match "probe-stdout") "stdout should be captured"
