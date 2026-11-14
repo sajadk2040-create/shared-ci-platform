@@ -40,6 +40,7 @@ The runner does not install dependencies or access the network unless an explici
 - [Standalone import and validation status](docs/PORTING-STATUS.md)
 - [Standalone bootstrap and release gates](docs/REPOSITORY-BOOTSTRAP.md)
 - [Local PowerShell validation guide](docs/LOCAL-VALIDATION.md)
+- [Local GitHub-to-PowerShell command agent (preview)](docs/LOCAL-COMMAND-AGENT.md)
 - [Self-hosted runner security review](docs/SELF-HOSTED-RUNNER-SECURITY-REVIEW.md)
 - [Read-only runner host preflight](docs/RUNNER-HOST-PREFLIGHT.md)
 - [Guarded runner host provisioning](docs/RUNNER-HOST-PROVISIONING.md)
