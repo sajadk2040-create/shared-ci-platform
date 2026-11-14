@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "command": {
-    "id": "motiondeck-repository-validation-001",
-    "task": "motiondeck.repository-validation",
-    "issuedAt": "2026-11-14T20:39:18+03:30",
-    "expiresAt": "2026-11-14T21:09:18+03:30"
+    "id": "shared-ci-core-smoke-001",
+    "task": "shared-ci.core-smoke",
+    "issuedAt": "2026-11-14T20:40:14+03:30",
+    "expiresAt": "2026-11-14T21:10:14+03:30"
   }
 }
