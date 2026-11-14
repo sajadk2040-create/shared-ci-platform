@@ -34,7 +34,7 @@ Assert-True ($source -match 'expiresAt') "Command expiry is checked"
 Assert-True ($source -match 'ConvertFrom-Json -DateKind String') "Inbox timestamps remain ISO strings during JSON parsing"
 Assert-True ($source -match 'CultureInfo\]::InvariantCulture') "Timestamp parsing is culture-invariant"
 Assert-True ($source -match 'Test-ResponseExists') "Duplicate command responses are checked"
-Assert-True ($source -match '\$code -eq 0\) \{ return \$true \}') "Existing response is recognized only after a successful lookup"
+Assert-True ($source -match 'if \(\$ExitCode -eq 0\) \{ return "exists" \}') "Existing response is recognized only after a successful lookup"
 Assert-True ($source -match 'Not Found.*HTTP 404') "Only explicit GitHub 404 is treated as a missing response"
 Assert-True ($source -match 'Could not verify whether response') "Non-404 lookup failures stop processing instead of executing a task"
 
