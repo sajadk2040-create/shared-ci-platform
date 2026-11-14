@@ -80,7 +80,8 @@ try {
     Assert-True ($auditSource.Contains('$next = $parent.FullName')) 'ancestor traversal must preserve the volume-root path'
     Assert-True (-not $auditSource.Contains('$parent.FullName.TrimEnd')) 'ancestor traversal must not convert a volume root such as C:\\ into a drive-relative path'
     . $aclHelper
-    $parentAssessment = Get-SharedCiParentAclAssessment -Path $target
+    $missingParentForAcl = Join-Path $testRoot 'parent-does-not-exist'
+    $parentAssessment = Get-SharedCiParentAclAssessment -Path $missingParentForAcl
     Assert-True (Test-SharedCiBroadPrincipalWriteRule -PrincipalSid 'S-1-5-11' -Rights ([Security.AccessControl.FileSystemRights]::Modify) -AccessControlType Allow) 'Authenticated Users Modify ACE must be classified as broad write access'
     Assert-True (-not (Test-SharedCiBroadPrincipalWriteRule -PrincipalSid 'S-1-5-11' -Rights ([Security.AccessControl.FileSystemRights]::ReadAndExecute) -AccessControlType Allow)) 'Authenticated Users read-only ACE must not be classified as broad write access'
     Assert-True (-not (Test-SharedCiBroadPrincipalWriteRule -PrincipalSid 'S-1-5-21-100-200-300-1001' -Rights ([Security.AccessControl.FileSystemRights]::FullControl) -AccessControlType Allow)) 'a non-broad principal must not be classified by the broad-principal predicate'
