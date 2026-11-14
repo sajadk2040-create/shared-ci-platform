@@ -16,10 +16,10 @@ permissions:
 
 jobs:
   shared:
-    uses: sajadk2040-create/motiondeck-studio/.github/workflows/shared-ci-reusable.yml@main
+    uses: sajadk2040-create/shared-ci-platform/.github/workflows/reusable.yml@v0.1.0
 ```
 
-For a future dedicated platform repository, replace the reusable workflow reference with its versioned `@v1` tag.
+The example assumes the `v0.1.0` release tag has been published. Until the PowerShell runtime and security release gates pass and that tag exists, do not enable this caller workflow. Pin the workflow to a reviewed release tag or immutable commit SHA.
 
 ## Presets and schema
 
