@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "command": {
-    "id": "agent-404-regex-validation-007",
+    "id": "agent-response-decision-tests-008",
     "task": "shared-ci.local-agent-static",
-    "issuedAt": "2026-11-14T20:54:23+03:30",
-    "expiresAt": "2026-11-14T21:24:23+03:30"
+    "issuedAt": "2026-11-14T20:57:11+03:30",
+    "expiresAt": "2026-11-14T21:27:11+03:30"
   }
 }
