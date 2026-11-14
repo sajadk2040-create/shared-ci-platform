@@ -30,10 +30,15 @@ Copy-Item -LiteralPath $runnerSource -Destination (Join-Path $platformRoot "scri
 $helperPath = Join-Path $projectRoot "probe.ps1"
 @'
 param(
+  [Parameter(Position = 0)]
   [string]$CapturePath,
+  [Parameter(Position = 1)]
   [int]$ExitCode = 0,
+  [Parameter()]
   [int]$SleepSeconds = 0,
+  [Parameter()]
   [string]$ChildPidPath,
+  [Parameter()]
   [string]$ChildExecutable,
   [Parameter(ValueFromRemainingArguments = $true)]
   [string[]]$ProbeArguments
