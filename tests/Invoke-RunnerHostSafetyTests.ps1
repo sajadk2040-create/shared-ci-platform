@@ -110,6 +110,15 @@ try {
         param([string]$Identity,[string]$Type='Allow',[string]$Rights='FullControl',[string]$Inheritance='ContainerInherit, ObjectInherit',[string]$Propagation='None',[bool]$Inherited=$false)
         [pscustomobject]@{ Identity=$Identity; AccessControlType=$Type; Rights=$Rights; InheritanceFlags=$Inheritance; PropagationFlags=$Propagation; IsInherited=$Inherited }
     }
+    $existingDirectoryRules = @(
+        (New-TestAclRule -Identity 'S-1-5-18' -Inherited $true),
+        (New-TestAclRule -Identity 'S-1-5-32-544' -Inherited $true)
+    )
+    $existingDirectoryAcl = Test-SharedCiExistingRunnerDirectoryState -DirectoryExists $true -IsReparsePoint $false -Rules $existingDirectoryRules -ExpectedIdentities @('S-1-5-18','S-1-5-32-544')
+    Assert-True $existingDirectoryAcl.IsSafe 'an existing directory with only inherited SYSTEM/Administrators FullControl ACEs should be reusable'
+    Assert-True (-not (Test-SharedCiExistingRunnerDirectoryState -DirectoryExists $true -IsReparsePoint $true -Rules $existingDirectoryRules -ExpectedIdentities @('S-1-5-18','S-1-5-32-544')).IsSafe) 'an existing reparse-point directory must not be reused'
+    Assert-True (-not (Test-SharedCiExistingRunnerDirectoryState -DirectoryExists $true -IsReparsePoint $false -Rules $validRules -ExpectedIdentities @('S-1-5-18','S-1-5-32-544')).IsSafe) 'an existing directory with extra or explicit ACEs must not be reused'
+    Assert-True (-not (Test-SharedCiExistingRunnerDirectoryState -DirectoryExists $false -IsReparsePoint $false -Rules $existingDirectoryRules -ExpectedIdentities @('S-1-5-18','S-1-5-32-544')).IsSafe) 'a missing directory must not be treated as reusable'
     $validRules = @(
         (New-TestAclRule -Identity $expectedSids[0]),
         (New-TestAclRule -Identity $expectedSids[1]),
@@ -140,6 +149,9 @@ try {
     Assert-True ($source.Contains('Import-Module Microsoft.PowerShell.LocalAccounts -ErrorAction Stop')) 'Apply mode must explicitly load LocalAccounts module'
     Assert-True ($source.Contains('[Environment]::Is64BitProcess')) 'Apply mode must reject 32-bit PowerShell'
     Assert-True ($source.Contains('SetAccessRuleProtection($true, $false)')) 'directory ACL inheritance must be protected'
+    Assert-True ($source.Contains("-Description 'Shared CI runner account'")) 'local account description must stay within the Windows 48-character limit'
+    Assert-True ($source.Contains('Test-SharedCiExistingRunnerDirectoryState')) 'an existing partial directory must pass an exact inherited ACL and reparse-point assessment before reuse'
+    Assert-True ($source.Contains('if (-not $targetExists)')) 'a verified existing partial directory must not be recreated'
     Assert-True ($source.Contains('Get-SharedCiParentAclAssessment -Path $parentPath')) 'provisioning must inspect the parent path and existing ancestors before Apply'
     Assert-True ($source.Contains('ParentAclAssessment = $parentAclAssessment')) 'plan output must include the parent ACL assessment'
     Assert-True ($source.Contains('if (-not $parentAclAssessment.IsSafe)')) 'Apply mode must fail closed when parent ACL assessment is unsafe'
