@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "command": {
-    "id": "agent-bootstrap-static-001",
+    "id": "agent-static-validation-002",
     "task": "shared-ci.local-agent-static",
-    "issuedAt": "2026-11-14T19:51:00+03:30",
-    "expiresAt": "2026-11-14T20:51:00+03:30"
+    "issuedAt": "2026-11-14T20:35:56+03:30",
+    "expiresAt": "2026-11-14T21:20:56+03:30"
   }
 }
