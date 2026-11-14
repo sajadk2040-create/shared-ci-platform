@@ -44,6 +44,10 @@ The reusable workflow is available at `.github/workflows/reusable.yml`. A consum
 
 Never run untrusted fork pull-request code on a privileged self-hosted runner. Do not enable the workflow until the runner is secured, registered and online. The workflow intentionally does not use GitHub-hosted runners.
 
+## License
+
+This project is distributed under the [MIT License](LICENSE).
+
 ## Security
 
 - Use a dedicated least-privilege runner account and isolated work directory.
