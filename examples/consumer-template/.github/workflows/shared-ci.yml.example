@@ -1,0 +1,14 @@
+name: Shared CI
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shared:
+    uses: sajadk2040-create/shared-ci-platform/.github/workflows/reusable.yml@<REVIEWED_40_CHARACTER_COMMIT_SHA>
+    with:
+      config-path: ci.project.example.json
+      platform-ref: <REVIEWED_40_CHARACTER_COMMIT_SHA>
