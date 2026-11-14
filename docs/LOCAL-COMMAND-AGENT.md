@@ -45,6 +45,14 @@ The agent rejects expired commands, timestamps too far in the future, malformed 
 
 Each response is written to responses/<command-id>.json. Responses include task, status, exit code, duration, timestamps and bounded/redacted output. The inbox is not automatically cleared; the response file makes processing idempotent.
 
+## Static safety check
+
+Run the parser and source-guard checks before starting the agent:
+
+    pwsh -NoProfile -File .\\tests\\Invoke-LocalAgentStaticTests.ps1
+
+This is a static check only; it does not validate live GitHub polling or Windows process execution.
+
 ## Limitations
 
 - One outstanding command at a time; replace the inbox only after the previous response exists.
