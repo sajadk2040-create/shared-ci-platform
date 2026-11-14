@@ -27,14 +27,14 @@ The reusable workflow defaults its `platform-ref` input to `v0.1.0`; therefore c
 
 ## Smoke test harness added
 
-`tests/Invoke-RunnerSmokeTests.ps1` is a self-contained PowerShell 7 harness. It creates an isolated temporary project and exercises five groups: successful execution and report capture; preservation of arguments containing spaces/quotes; intentional child exit code 23 and runner failure status; rejection of lexical working-directory traversal and absolute config paths; rejection of an unsupported schema version before any configured command executes. The harness is authored but has **not** been executed because this environment has no PowerShell runtime and remote Desktop Commander allowance is nearly exhausted. It does not test symlink/reparse-point escapes.
+`tests/Invoke-RunnerSmokeTests.ps1` is a self-contained PowerShell 7 harness. It creates an isolated temporary project and exercises six groups: successful execution and report capture; preservation of arguments containing spaces/quotes; intentional child exit code 23 and runner failure status; rejection of lexical working-directory traversal; rejection of Windows junction traversal; rejection of absolute config paths; and rejection of an unsupported schema version before any configured command executes. The harness is authored but has **not** been executed because this environment has no PowerShell runtime and remote Desktop Commander allowance is nearly exhausted. On Windows it also creates a directory junction to an outside folder and verifies that the runner rejects it; symlink/reparse-point handling still requires runtime validation.
 
 ## Remaining work
 
 1. Run PowerShell 7 parser validation on `scripts/run.ps1`.
 2. Run `pwsh -NoProfile -File tests/Invoke-RunnerSmokeTests.ps1` and verify all four smoke-test groups.
 3. Run intentional failure fixture; verify non-zero runner exit and recorded step exit code 23.
-4. Add invalid-config coverage and address symlink/reparse-point path escapes; current harness covers lexical traversal only.
+4. Add invalid-config coverage and execute the Windows junction test and review any remaining symlink/reparse-point edge cases.
 5. Parse the reusable workflow YAML and review permissions/checkout behavior.
 6. Decide public/private access and register a dedicated least-privilege self-hosted runner.
 7. Publish `v0.1.0` only after all applicable gates pass.
