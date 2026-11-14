@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "commandId": "agent-404-regex-validation-007",
+  "task": "shared-ci.local-agent-static",
+  "status": "passed",
+  "exitCode": 0,
+  "timedOut": false,
+  "startedAt": "2026-11-14T20:55:16.4614645+03:30",
+  "finishedAt": "2026-11-14T20:55:16.9383755+03:30",
+  "durationSeconds": 0.348,
+  "stdout": "PASS: local agent static safety tests\r\n",
+  "stderr": ""
+}
