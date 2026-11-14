@@ -27,7 +27,7 @@ The reusable workflow defaults its `platform-ref` input to `v0.1.0`; therefore c
 
 ## Smoke test harness added
 
-`tests/Invoke-RunnerSmokeTests.ps1` is a self-contained PowerShell 7 harness. It creates an isolated temporary project and exercises four groups: successful execution and report capture; preservation of arguments containing spaces/quotes; intentional child exit code 23 and runner failure status; rejection of lexical working-directory traversal and absolute config paths. The harness is authored but has **not** been executed because this environment has no PowerShell runtime and remote Desktop Commander allowance is nearly exhausted. It does not test symlink/reparse-point escapes.
+`tests/Invoke-RunnerSmokeTests.ps1` is a self-contained PowerShell 7 harness. It creates an isolated temporary project and exercises five groups: successful execution and report capture; preservation of arguments containing spaces/quotes; intentional child exit code 23 and runner failure status; rejection of lexical working-directory traversal and absolute config paths; rejection of an unsupported schema version before any configured command executes. The harness is authored but has **not** been executed because this environment has no PowerShell runtime and remote Desktop Commander allowance is nearly exhausted. It does not test symlink/reparse-point escapes.
 
 ## Remaining work
 
