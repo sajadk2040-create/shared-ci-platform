@@ -35,7 +35,7 @@ Assert-True ($source -match 'ConvertFrom-Json -DateKind String') "Inbox timestam
 Assert-True ($source -match 'CultureInfo\]::InvariantCulture') "Timestamp parsing is culture-invariant"
 Assert-True ($source -match 'Test-ResponseExists') "Duplicate command responses are checked"
 Assert-True ($source -match '\$code -eq 0\) \{ return \$true \}') "Existing response is recognized only after a successful lookup"
-Assert-True ($source -match 'Not Found\\s\*\\s\*\\(HTTP 404\\)') "Only explicit GitHub 404 is treated as a missing response"
+Assert-True ($source -match 'Not Found\\s\*\\(HTTP 404\\)') "Only explicit GitHub 404 is treated as a missing response"
 Assert-True ($source -match 'Could not verify whether response') "Non-404 lookup failures stop processing instead of executing a task"
 Assert-True ($source -match '\$\{Path\}\?ref=\$Ref') "Response lookup URL delimits the path variable"
 Assert-True ($source -match 'OUTPUT TRUNCATED') "Output is bounded"
