@@ -48,9 +48,7 @@ function Test-SharedCiBroadPrincipalWriteRule {
         [Security.AccessControl.FileSystemRights]::DeleteSubdirectoriesAndFiles -bor
         [Security.AccessControl.FileSystemRights]::Delete -bor
         [Security.AccessControl.FileSystemRights]::ChangePermissions -bor
-        [Security.AccessControl.FileSystemRights]::TakeOwnership -bor
-        [Security.AccessControl.FileSystemRights]::Modify -bor
-        [Security.AccessControl.FileSystemRights]::FullControl
+        [Security.AccessControl.FileSystemRights]::TakeOwnership
     )
     return (
         $AccessControlType -eq [Security.AccessControl.AccessControlType]::Allow -and
