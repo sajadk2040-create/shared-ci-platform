@@ -18,8 +18,8 @@ while ($current) {
     }
     $parent = [IO.Directory]::GetParent($current)
     if ($null -eq $parent) { break }
-    $next = $parent.FullName.TrimEnd('\\')
-    if ($next -eq $current) { break }
+    $next = $parent.FullName
+    if ([string]::Equals($next, $current, [StringComparison]::OrdinalIgnoreCase)) { break }
     $current = $next
 }
 $user = Get-LocalUser -Name $AccountName -ErrorAction Stop
