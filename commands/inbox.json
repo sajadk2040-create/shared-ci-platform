@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "command": {
-    "id": "agent-failclosed-validation-005",
+    "id": "agent-failclosed-validation-006",
     "task": "shared-ci.local-agent-static",
-    "issuedAt": "2026-11-14T20:50:22+03:30",
-    "expiresAt": "2026-11-14T21:20:22+03:30"
+    "issuedAt": "2026-11-14T20:51:30+03:30",
+    "expiresAt": "2026-11-14T21:21:30+03:30"
   }
 }
