@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "commandId": "shared-ci-filesystem-links-014",
+  "task": "shared-ci.filesystem-links",
+  "status": "failed",
+  "exitCode": 1,
+  "timedOut": false,
+  "startedAt": "2026-11-14T21:17:23.1918445+03:30",
+  "finishedAt": "2026-11-14T21:17:23.6750686+03:30",
+  "durationSeconds": 0.343,
+  "stdout": "",
+  "stderr": "\u001b[31;1mException: \u001b[0mC:\\Users\\user\\MotionDeckStudio\\shared-ci-platform\\tests\\Invoke-RunnerFilesystemLinkIntegrationTests.ps1:13\u001b[0m\r\n\u001b[31;1m\u001b[0m\u001b[36;1mLine |\u001b[0m\r\n\u001b[31;1m\u001b[0m\u001b[36;1m\u001b[36;1m  13 | \u001b[0m . vironment]::Is64BitProcess) { \u001b[36;1mthrow 'Run with 64-bit PowerShell 7.'\u001b[0m }\u001b[0m\r\n\u001b[31;1m\u001b[0m\u001b[36;1m\u001b[36;1m\u001b[0m\u001b[36;1m\u001b[0m\u001b[36;1m     | \u001b[31;1m                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\r\n\u001b[31;1m\u001b[0m\u001b[36;1m\u001b[36;1m\u001b[0m\u001b[36;1m\u001b[0m\u001b[36;1m\u001b[31;1m\u001b[31;1m\u001b[36;1m     | \u001b[31;1mRun with 64-bit PowerShell 7.\u001b[0m\r\n"
+}
