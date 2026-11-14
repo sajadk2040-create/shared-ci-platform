@@ -4,7 +4,7 @@ A portable command-based CI runner for local development and dedicated self-host
 
 ## Status
 
-**Local runtime validation passed.** The expanded eight-group Windows PowerShell 7.6.9 smoke suite passed on commit `068a78027c74d023f13abf00122de14bb1d55461`, including timeout process-tree termination and concurrent report isolation. Re-run it on each release candidate; GitHub Actions/self-hosted workflow validation and security/release gates remain outstanding. The release manifest's `0.1.0` remains a bootstrap target, not a production release. See [release gates](docs/REPOSITORY-BOOTSTRAP.md).
+**Local runtime validation passed for the core runner and the initial host-safety harness.** The eight-group Windows PowerShell 7.6.9 core smoke suite passed on commit `068a78027c74d023f13abf00122de14bb1d55461`, including timeout process-tree termination and concurrent report isolation. The runner-host safety harness subsequently passed its three groups on the Windows 11 host after the Plan-only compatibility fix. Its latest additions for the isolation-audit script (including ancestor reparse-point checks) are committed but have not yet been rerun on Windows. No provisioning, account creation, ACL mutation, runner registration, or service installation has been performed. GitHub Actions/self-hosted workflow validation and release gates remain outstanding. The release manifest's `0.1.0` remains a bootstrap target, not a production release. See [release gates](docs/REPOSITORY-BOOTSTRAP.md).
 
 ## Features
 
