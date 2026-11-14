@@ -49,7 +49,7 @@ The runner does not install dependencies or access the network unless an explici
 
 ## Reusable workflow
 
-The reusable workflow is available at `.github/workflows/reusable.yml`. A consumer calls it from a protected-branch workflow and must register a dedicated self-hosted runner with labels `self-hosted`, `Windows`, `X64`, and `shared-ci`.
+The reusable workflow is available at `.github/workflows/reusable.yml`. A consumer calls it from a workflow pinned to a reviewed immutable commit and must pass the same 40-character commit SHA as the required `platform-ref` input. The job requires a dedicated self-hosted runner with labels `self-hosted`, `Windows`, `X64`, and `shared-ci`. Before running the consumer config, the workflow executes the core smoke suite, host-safety suite, and real Windows filesystem-link integration test.
 
 Never run untrusted fork pull-request code on a privileged self-hosted runner. Do not enable the workflow until the runner is secured, registered and online. The workflow intentionally does not use GitHub-hosted runners.
 
