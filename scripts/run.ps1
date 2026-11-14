@@ -15,6 +15,22 @@ function Resolve-ProjectPath([string]$RelativePath, [string]$Purpose) {
   if ($resolved -ne $repoRoot -and -not $resolved.StartsWith($rootPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
     throw "$Purpose path escapes the project root: $RelativePath"
   }
+
+  # Reject existing symlinks, junctions and other reparse points in every
+  # path component. Lexical normalization alone does not stop a path inside
+  # the workspace from resolving to a location outside it.
+  $relativeResolved = [System.IO.Path]::GetRelativePath($repoRoot, $resolved)
+  $segments = $relativeResolved -split "[\\/]" | Where-Object { $_ -and $_ -ne "." }
+  $cursor = $repoRoot
+  foreach ($segment in $segments) {
+    $cursor = Join-Path $cursor $segment
+    if (Test-Path -LiteralPath $cursor) {
+      $item = Get-Item -LiteralPath $cursor -Force
+      if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+        throw "$Purpose path contains a symbolic link or reparse point: $cursor"
+      }
+    }
+  }
   return $resolved
 }
 
