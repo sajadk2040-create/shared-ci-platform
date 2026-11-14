@@ -26,7 +26,7 @@ The reusable workflow must be copied from the MotionDeck root `.github/workflows
 
 ## Automated smoke test harness
 
-With PowerShell 7 installed, run the self-contained harness from the repository root:
+See [Local validation guide](LOCAL-VALIDATION.md) for the full isolated procedure. With PowerShell 7 installed, run the self-contained harness from the repository root:
 
 ```powershell
 pwsh -NoProfile -File tests/Invoke-RunnerSmokeTests.ps1
@@ -41,7 +41,7 @@ See `examples/smoke-project/README.md`. It includes a successful command fixture
 ## Release gates
 
 Do not tag a stable release until:
-- PowerShell 7 parser checks pass.
+- The smoke harness PowerShell parser check passes.
 - Smoke success fixture produces a passed JSON/Markdown report.
 - Expected-failure fixture exits non-zero and records exit code 23.
 - Path traversal and invalid config fixtures are rejected before command execution.
