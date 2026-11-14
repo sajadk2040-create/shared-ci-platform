@@ -25,7 +25,8 @@ if (Test-Path -LiteralPath $parentPath) {
     $parentItem = Get-Item -LiteralPath $parentPath -Force
     if (($parentItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'Parent directory is a reparse point; refusing to continue.' }
 }
-$existing = Get-LocalUser -Name $AccountName -ErrorAction SilentlyContinue
+$existing = Get-CimInstance -ClassName Win32_UserAccount -Filter "LocalAccount=True AND Name='$AccountName'" -ErrorAction Stop |
+    Where-Object { $_.LocalAccount -and $_.Name -eq $AccountName }
 if ($null -ne $existing) { throw "Local account '$AccountName' already exists; refusing to modify an existing account." }
 [pscustomobject]@{
     AccountName = $AccountName
@@ -41,7 +42,9 @@ if (-not $Apply) {
     Write-Host 'Plan only. No account or directory was created. Re-run with -Apply and the exact confirmation text to authorize local changes.'
     return
 }
-if (-not (Test-IsAdministrator)) { throw 'Run this script from an elevated PowerShell 7 session.' }
+if (-not [Environment]::Is64BitProcess) { throw 'Apply mode requires 64-bit PowerShell 7 because the Windows LocalAccounts module is not supported in 32-bit PowerShell.' }
+if (-not (Test-IsAdministrator)) { throw 'Run this script from an elevated 64-bit PowerShell 7 session.' }
+Import-Module Microsoft.PowerShell.LocalAccounts -ErrorAction Stop
 if ($ConfirmationText -cne $requiredConfirmation) { throw "Explicit confirmation required. Supply -ConfirmationText exactly: $requiredConfirmation" }
 if (-not $PSCmdlet.ShouldProcess("$AccountName and $targetRoot", 'Create standard local account and isolated directory')) { throw 'Provisioning was not approved by ShouldProcess.' }
 $password = $null
