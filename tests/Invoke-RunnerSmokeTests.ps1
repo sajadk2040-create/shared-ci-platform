@@ -1,0 +1,137 @@
+[CmdletBinding()]
+param(
+  [string]$RepositoryRoot = (Split-Path -Parent $PSScriptRoot)
+)
+
+$ErrorActionPreference = "Stop"
+$pwshCommand = Get-Command pwsh -ErrorAction Stop
+$pwshPath = $pwshCommand.Source
+$runnerSource = Join-Path $RepositoryRoot "scripts/run.ps1"
+if (-not (Test-Path -LiteralPath $runnerSource -PathType Leaf)) {
+  throw "Runner not found: $runnerSource"
+}
+
+$testRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("shared-ci-smoke-" + [guid]::NewGuid().ToString("N"))
+$projectRoot = Join-Path $testRoot "project"
+$platformRoot = Join-Path $testRoot "platform"
+$null = New-Item -ItemType Directory -Path $projectRoot, (Join-Path $platformRoot "scripts") -Force
+Copy-Item -LiteralPath $runnerSource -Destination (Join-Path $platformRoot "scripts/run.ps1")
+
+$helperPath = Join-Path $projectRoot "probe.ps1"
+@'
+param(
+  [string]$CapturePath,
+  [int]$ExitCode = 0,
+  [Parameter(ValueFromRemainingArguments = $true)]
+  [string[]]$ProbeArguments
+)
+[pscustomobject]@{ arguments = @($ProbeArguments) } |
+  ConvertTo-Json -Depth 4 |
+  Set-Content -LiteralPath $CapturePath -Encoding utf8
+Write-Output "probe-stdout"
+[Console]::Error.WriteLine("probe-stderr")
+exit $ExitCode
+'@ | Set-Content -LiteralPath $helperPath -Encoding utf8
+
+function Assert-True([bool]$Condition, [string]$Message) {
+  if (-not $Condition) { throw "ASSERTION FAILED: $Message" }
+}
+
+function Write-Config([string]$Path, [object]$Config) {
+  $Config | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $Path -Encoding utf8
+}
+
+try {
+  # Test 1: successful process, argument boundaries, stdout/stderr and reports.
+  $capturePath = Join-Path $projectRoot "captured-args.json"
+  $successConfig = Join-Path $projectRoot "success.json"
+  Write-Config $successConfig ([pscustomobject]@{
+    schemaVersion = 1
+    project = @{ name = "shared-ci-smoke-pass"; reportDirectory = "artifacts/pass" }
+    steps = @(@{
+      name = "argument-boundary-probe"
+      command = $pwshPath
+      args = @("-NoProfile", "-File", $helperPath, "-CapturePath", $capturePath, "-ExitCode", "0", "value with spaces", 'quote"value', "tail")
+    })
+  })
+  Push-Location $projectRoot
+  try {
+    & $pwshPath -NoProfile -File (Join-Path $platformRoot "scripts/run.ps1") -ConfigPath "success.json"
+    $successRunnerExit = $LASTEXITCODE
+  } finally { Pop-Location }
+  Assert-True ($successRunnerExit -eq 0) "success fixture should return runner exit code 0"
+  $captured = Get-Content -LiteralPath $capturePath -Raw | ConvertFrom-Json
+  Assert-True ($captured.arguments.Count -eq 3) "probe should receive exactly three user arguments"
+  Assert-True ($captured.arguments[0] -eq "value with spaces") "argument containing spaces must remain one argument"
+  Assert-True ($captured.arguments[1] -eq 'quote"value') "embedded quote must be preserved"
+  Assert-True ($captured.arguments[2] -eq "tail") "trailing argument must be preserved"
+
+  $passReports = Join-Path $projectRoot "artifacts/pass"
+  $jsonReport = Get-ChildItem -LiteralPath $passReports -Filter "*.json" | Select-Object -First 1
+  Assert-True ($null -ne $jsonReport) "JSON report should exist"
+  $passReport = Get-Content -LiteralPath $jsonReport.FullName -Raw | ConvertFrom-Json
+  Assert-True ($passReport.status -eq "passed") "success report status should be passed"
+  Assert-True ($passReport.steps[0].exitCode -eq 0) "success step exit code should be 0"
+  $stdoutFile = Join-Path $passReports $passReport.steps[0].stdout
+  $stderrFile = Join-Path $passReports $passReport.steps[0].stderr
+  Assert-True ((Get-Content -LiteralPath $stdoutFile -Raw) -match "probe-stdout") "stdout should be captured"
+  Assert-True ((Get-Content -LiteralPath $stderrFile -Raw) -match "probe-stderr") "stderr should be captured"
+
+  # Test 2: child exit code 23 is retained in the report; runner returns 1.
+  $failureConfig = Join-Path $projectRoot "failure.json"
+  Write-Config $failureConfig ([pscustomobject]@{
+    schemaVersion = 1
+    project = @{ name = "shared-ci-smoke-fail"; reportDirectory = "artifacts/fail" }
+    steps = @(@{
+      name = "intentional-exit-23"
+      command = $pwshPath
+      args = @("-NoProfile", "-File", $helperPath, "-CapturePath", (Join-Path $projectRoot "failed-args.json"), "-ExitCode", "23")
+    })
+  })
+  Push-Location $projectRoot
+  try {
+    & $pwshPath -NoProfile -File (Join-Path $platformRoot "scripts/run.ps1") -ConfigPath "failure.json"
+    $failureRunnerExit = $LASTEXITCODE
+  } finally { Pop-Location }
+  Assert-True ($failureRunnerExit -eq 1) "failed step should produce runner exit code 1"
+  $failureJson = Get-ChildItem -LiteralPath (Join-Path $projectRoot "artifacts/fail") -Filter "*.json" | Select-Object -First 1
+  $failureReport = Get-Content -LiteralPath $failureJson.FullName -Raw | ConvertFrom-Json
+  Assert-True ($failureReport.status -eq "failed") "failure report status should be failed"
+  Assert-True ($failureReport.steps[0].exitCode -eq 23) "report must preserve child exit code 23"
+
+  # Test 3: lexical traversal in a workingDirectory is rejected.
+  $escapeConfig = Join-Path $projectRoot "escape.json"
+  Write-Config $escapeConfig ([pscustomobject]@{
+    schemaVersion = 1
+    project = @{ name = "shared-ci-smoke-escape" }
+    steps = @(@{ name = "escape"; command = $pwshPath; workingDirectory = "../outside"; args = @("-NoProfile", "-Version") })
+  })
+  Push-Location $projectRoot
+  try {
+    & $pwshPath -NoProfile -File (Join-Path $platformRoot "scripts/run.ps1") -ConfigPath "escape.json" 2>&1 | Out-Null
+    $escapeRunnerExit = $LASTEXITCODE
+  } finally { Pop-Location }
+  Assert-True ($escapeRunnerExit -ne 0) "workingDirectory traversal must be rejected"
+
+  # Test 4: absolute config paths are rejected.
+  Push-Location $projectRoot
+  try {
+    & $pwshPath -NoProfile -File (Join-Path $platformRoot "scripts/run.ps1") -ConfigPath $successConfig 2>&1 | Out-Null
+    $absoluteConfigExit = $LASTEXITCODE
+  } finally { Pop-Location }
+  Assert-True ($absoluteConfigExit -ne 0) "absolute config path must be rejected"
+
+  Write-Host "PASS: runner smoke tests (4 groups)"
+  Write-Host "Temporary test workspace: $testRoot"
+}
+catch {
+  Write-Error $_
+  Write-Host "FAILED: runner smoke tests"
+  Write-Host "Temporary test workspace retained for inspection: $testRoot"
+  throw
+}
+finally {
+  if ($?) {
+    Remove-Item -LiteralPath $testRoot -Recurse -Force -ErrorAction SilentlyContinue
+  }
+}
