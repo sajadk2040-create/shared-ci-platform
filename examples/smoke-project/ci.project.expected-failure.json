@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "name": "shared-ci-smoke-expected-failure",
+    "reportDirectory": "artifacts/ci-failure"
+  },
+  "steps": [
+    {
+      "name": "Intentional failure",
+      "command": "pwsh",
+      "args": ["-NoProfile", "-File", "checks/fail.ps1"],
+      "workingDirectory": "."
+    }
+  ]
+}
