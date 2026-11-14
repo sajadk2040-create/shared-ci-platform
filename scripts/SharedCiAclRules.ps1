@@ -57,66 +57,127 @@ function Test-SharedCiBroadPrincipalWriteRule {
     )
 }
 
+function Test-SharedCiBroadPrincipalDeleteChildRule {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][string]$PrincipalSid,
+        [Parameter(Mandatory=$true)][Security.AccessControl.FileSystemRights]$Rights,
+        [Parameter(Mandatory=$true)][Security.AccessControl.AccessControlType]$AccessControlType
+    )
+    $broadSids = @('S-1-1-0','S-1-5-11','S-1-5-32-545','S-1-5-4','S-1-5-2')
+    return ($AccessControlType -eq [Security.AccessControl.AccessControlType]::Allow -and $PrincipalSid -in $broadSids -and (([int64]$Rights -band [int64][Security.AccessControl.FileSystemRights]::DeleteSubdirectoriesAndFiles) -ne 0))
+}
+
+function Test-SharedCiParentAclState {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][bool]$ParentExists,
+        [Parameter(Mandatory=$true)][bool]$ParentAclValid,
+        [Parameter(Mandatory=$true)][int]$ReparsePointCount,
+        [Parameter(Mandatory=$true)][int]$InspectionErrorCount,
+        [Parameter(Mandatory=$true)][int]$AncestorDeleteChildCount
+    )
+    return ($ParentExists -and $ParentAclValid -and $ReparsePointCount -eq 0 -and $InspectionErrorCount -eq 0 -and $AncestorDeleteChildCount -eq 0)
+}
+
 function Get-SharedCiParentAclAssessment {
     [CmdletBinding()]
     param([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$Path)
 
     $broadSids = @('S-1-1-0','S-1-5-11','S-1-5-32-545','S-1-5-4','S-1-5-2')
-    $candidate = [IO.Path]::GetFullPath($Path)
-    while (-not (Test-Path -LiteralPath $candidate -PathType Container)) {
-        $parent = [IO.Directory]::GetParent($candidate)
-        if ($null -eq $parent) { throw 'No existing ancestor directory could be found for the runner parent path.' }
-        $candidate = $parent.FullName
+    $expectedParentSids = @('S-1-5-18','S-1-5-32-544')
+    $requested = [IO.Path]::GetFullPath($Path)
+
+    if (-not (Test-Path -LiteralPath $requested -PathType Container)) {
+        return [pscustomobject]@{
+            IsSafe = $false
+            ParentExists = $false
+            RequestedPath = $requested
+            ExistingAncestorChecked = $null
+            CheckedAncestors = @()
+            ReparsePointAncestors = @()
+            BroadPrincipalWriteEntries = @()
+            AncestorDeleteChildEntries = @()
+            InspectionErrors = @()
+            ParentAclAssessment = $null
+            BroadPrincipalSidsChecked = $broadSids
+            Notes = 'The dedicated parent directory must be created and secured by an administrator before provisioning. Missing parents are never created automatically.'
+        }
     }
 
     $checked = @()
     $broadWrite = @()
+    $ancestorDeleteChild = @()
     $reparse = @()
     $inspectionErrors = @()
-    $current = [IO.DirectoryInfo]::new($candidate).FullName
+    $parentAclAssessment = $null
+    $current = [IO.DirectoryInfo]::new($requested).FullName
+    $isFirst = $true
+
     while ($current) {
         try {
             $item = Get-Item -LiteralPath $current -Force -ErrorAction Stop
             $checked += $current
-            if (Test-SharedCiReparsePointAttributes -Attributes $item.Attributes) {
-                $reparse += $current
-            }
+            if (Test-SharedCiReparsePointAttributes -Attributes $item.Attributes) { $reparse += $current }
+
             $acl = Get-Acl -LiteralPath $current -ErrorAction Stop
-            $rules = $acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier])
-            foreach ($rule in $rules) {
-                $sid = $rule.IdentityReference.Value
-                if (Test-SharedCiBroadPrincipalWriteRule -PrincipalSid $sid -Rights $rule.FileSystemRights -AccessControlType $rule.AccessControlType) {
-                    $broadWrite += [pscustomobject]@{
-                        Ancestor = $current
-                        PrincipalSid = $sid
-                        Rights = $rule.FileSystemRights.ToString()
-                        Inherited = [bool]$rule.IsInherited
+            $rules = @($acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier]))
+
+            if ($isFirst) {
+                $normalizedRules = @($rules | ForEach-Object {
+                    [pscustomobject]@{
+                        Identity = $_.IdentityReference.Value
+                        AccessControlType = $_.AccessControlType.ToString()
+                        Rights = $_.FileSystemRights.ToString()
+                        InheritanceFlags = $_.InheritanceFlags.ToString()
+                        PropagationFlags = $_.PropagationFlags.ToString()
+                        IsInherited = [bool]$_.IsInherited
+                    }
+                })
+                $parentAclAssessment = Get-SharedCiAclRuleAssessment -Rules $normalizedRules -ExpectedIdentities $expectedParentSids
+
+                foreach ($rule in $rules) {
+                    $sid = $rule.IdentityReference.Value
+                    if (Test-SharedCiBroadPrincipalWriteRule -PrincipalSid $sid -Rights $rule.FileSystemRights -AccessControlType $rule.AccessControlType) {
+                        $broadWrite += [pscustomobject]@{ Ancestor = $current; PrincipalSid = $sid; Rights = $rule.FileSystemRights.ToString(); Inherited = [bool]$rule.IsInherited }
+                    }
+                }
+            }
+            else {
+                foreach ($rule in $rules) {
+                    $sid = $rule.IdentityReference.Value
+                    if (Test-SharedCiBroadPrincipalDeleteChildRule -PrincipalSid $sid -Rights $rule.FileSystemRights -AccessControlType $rule.AccessControlType) {
+                        $ancestorDeleteChild += [pscustomobject]@{ Ancestor = $current; PrincipalSid = $sid; Rights = $rule.FileSystemRights.ToString(); Inherited = [bool]$rule.IsInherited }
                     }
                 }
             }
         }
         catch {
-            $inspectionErrors += [pscustomobject]@{
-                Ancestor = $current
-                ErrorType = $_.Exception.GetType().Name
-            }
+            $inspectionErrors += [pscustomobject]@{ Ancestor = $current; ErrorType = $_.Exception.GetType().Name }
         }
+
         $parentInfo = [IO.Directory]::GetParent($current)
         if ($null -eq $parentInfo) { break }
         $next = $parentInfo.FullName
         if ([string]::Equals($next, $current, [StringComparison]::OrdinalIgnoreCase)) { break }
         $current = $next
+        $isFirst = $false
     }
 
+    $safe = Test-SharedCiParentAclState -ParentExists $true -ParentAclValid ([bool]$parentAclAssessment.IsValid -and $broadWrite.Count -eq 0) -ReparsePointCount $reparse.Count -InspectionErrorCount $inspectionErrors.Count -AncestorDeleteChildCount $ancestorDeleteChild.Count
+
     [pscustomobject]@{
-        IsSafe = ($reparse.Count -eq 0 -and $broadWrite.Count -eq 0 -and $inspectionErrors.Count -eq 0)
-        RequestedPath = [IO.Path]::GetFullPath($Path)
-        ExistingAncestorChecked = $candidate
+        IsSafe = $safe
+        ParentExists = $true
+        RequestedPath = $requested
+        ExistingAncestorChecked = $requested
         CheckedAncestors = $checked
         ReparsePointAncestors = $reparse
         BroadPrincipalWriteEntries = $broadWrite
+        AncestorDeleteChildEntries = $ancestorDeleteChild
         InspectionErrors = $inspectionErrors
+        ParentAclAssessment = $parentAclAssessment
         BroadPrincipalSidsChecked = $broadSids
-        Notes = 'Read-only conservative check. It detects write-capable Allow ACEs for Everyone, Authenticated Users, BUILTIN Users, Interactive, and Network; it does not calculate effective access through nested group membership.'
+        Notes = 'The existing parent must have exactly two explicit inheritable FullControl Allow ACEs: SYSTEM and local Administrators. Ancestors are checked for reparse points, inspection failures, and broad-principal DeleteSubdirectoriesAndFiles rights. Broad create-directory rights on an ancestor do not invalidate an already-existing protected parent.'
     }
 }
