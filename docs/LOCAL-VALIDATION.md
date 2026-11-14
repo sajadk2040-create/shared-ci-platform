@@ -43,6 +43,8 @@ For a release candidate, record the following in the project handoff:
 
 Do not include machine-specific secrets, environment variables containing credentials, or private paths in public logs.
 
+Use [the validation evidence template](VALIDATION-RESULTS-TEMPLATE.md) to capture the runtime version, tested commit and results. Keep the filled-in copy local until machine-specific details have been reviewed and redacted.
+
 ## Boundaries
 
 This is a local validation path. It does not dispatch GitHub Actions, register a runner, publish a release tag, or prove that the reusable workflow succeeds on a self-hosted runner. Those remain separate release gates. The path reparse-point check is defense-in-depth and does not eliminate concurrent time-of-check/time-of-use races; run only trusted configuration in an isolated, least-privilege workspace.
