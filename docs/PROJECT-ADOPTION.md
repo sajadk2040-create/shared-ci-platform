@@ -1,5 +1,17 @@
 # Shared CI project adoption
 
+## Consumer starter template
+
+Start with [`examples/consumer-template/`](../examples/consumer-template/README.md). It contains a minimal v1 config, a PowerShell repository smoke script, and a manual-only reusable-workflow example. Copy the files into the consumer repository and replace the sample project name and checks.
+
+For local validation, install PowerShell 7 and run the platform directly from the consumer repository root:
+
+```powershell
+pwsh -NoProfile -File <path-to-shared-ci>/scripts/run.ps1 -ConfigPath ci.project.example.json
+```
+
+This local path does not require GitHub Actions, a registered runner, or any account/ACL/service changes. The starter smoke script only checks for a root `README.md`; replace it with meaningful project-specific checks before relying on it.
+
 ## Consumer repository
 
 A consumer uses the reusable workflow from this repository and must pass an immutable platform revision explicitly:
