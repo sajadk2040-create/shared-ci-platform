@@ -98,6 +98,12 @@ function Invoke-AllowedTask {
       if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) { throw "Shared CI core smoke script not found." }
       return Invoke-FixedProcess -FileName "pwsh" -Arguments @("-NoProfile","-File",$scriptPath) -WorkingDirectory $SharedCiRoot -TimeoutSeconds 900
     }
+    "shared-ci.local-agent-static" {
+      Assert-TrustedCheckout -Path $SharedCiRoot -ExpectedRemote $sharedCiRemote -ExpectedBranch $Ref
+      $scriptPath = Join-Path $SharedCiRoot "tests/Invoke-LocalAgentStaticTests.ps1"
+      if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) { throw "Local agent static test script not found." }
+      return Invoke-FixedProcess -FileName "pwsh" -Arguments @("-NoProfile","-File",$scriptPath) -WorkingDirectory $SharedCiRoot -TimeoutSeconds 60
+    }
     default { throw "Task is not allowlisted: $Task" }
   }
 }
