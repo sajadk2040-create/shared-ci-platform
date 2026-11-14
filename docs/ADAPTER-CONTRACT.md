@@ -19,7 +19,7 @@ Each step declares:
 - `workingDirectory`: path relative to the project root.
 - `continueOnError`: optional, defaults to false.
 
-The runner records start/end time, duration, exit code, stdout/stderr filenames and status. Any failed step without `continueOnError: true` makes the overall run fail.
+The runner records start/end time, duration, exit code, stdout/stderr filenames, status and argument count. Raw argument values are intentionally excluded from logs and JSON reports because arguments may contain credentials. Any failed step without `continueOnError: true` makes the overall run fail.
 
 ## Reproducibility
 
