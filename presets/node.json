@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "name": "node-project",
+    "reportDirectory": "artifacts/ci"
+  },
+  "steps": [
+    {
+      "name": "Install locked dependencies",
+      "command": "npm",
+      "args": ["ci", "--ignore-scripts", "--no-audit", "--no-fund"],
+      "workingDirectory": "."
+    },
+    {
+      "name": "Unit tests",
+      "command": "npm",
+      "args": ["test"],
+      "workingDirectory": "."
+    },
+    {
+      "name": "Type check",
+      "command": "npm",
+      "args": ["run", "typecheck"],
+      "workingDirectory": ".",
+      "continueOnError": true
+    }
+  ]
+}
