@@ -16,7 +16,7 @@ function Get-SharedCiAclRuleAssessment {
     $seen = @($Rules | ForEach-Object { [string]$_.Identity } | Sort-Object -Unique)
     $missing = @($expected | Where-Object { $_ -notin $seen })
     [pscustomobject]@{
-        IsValid = ($Rules.Count -eq 3 -and $unexpected.Count -eq 0 -and $missing.Count -eq 0)
+        IsValid = ($Rules.Count -eq $expected.Count -and $unexpected.Count -eq 0 -and $missing.Count -eq 0)
         RuleCount = $Rules.Count
         UnexpectedRuleCount = $unexpected.Count
         MissingPrincipalCount = $missing.Count
