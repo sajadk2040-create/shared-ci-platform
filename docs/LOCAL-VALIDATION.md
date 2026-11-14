@@ -32,6 +32,16 @@ The harness parses `scripts/run.ps1` with the PowerShell language parser, provis
 
 The harness prints a PASS line for parser validation and a final PASS line when all applicable checks finish. It exits non-zero on the first failed assertion. On failure, it retains the temporary workspace and prints its path for diagnosis; on success, it removes the temporary workspace.
 
+## Runner host safety tests
+
+The host preparation and preflight scripts have a separate non-provisioning test harness:
+
+```powershell
+pwsh -NoProfile -File tests/Invoke-RunnerHostSafetyTests.ps1
+```
+
+It validates parser syntax, synthetic runner metadata handling, credential-content non-disclosure, provisioning plan-only behavior, invalid-input rejection and static safety guards. It does not create accounts, set passwords, mutate ACLs, register runners or install services. See [Runner host safety test suite](RUNNER-HOST-SAFETY-TESTS.md).
+
 ## Evidence to record
 
 For a release candidate, record the following in the project handoff:
