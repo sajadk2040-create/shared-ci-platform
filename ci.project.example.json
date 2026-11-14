@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "name": "example-project",
+    "reportDirectory": "artifacts/ci"
+  },
+  "steps": [
+    {
+      "name": "Unit tests",
+      "command": "npm",
+      "args": ["test", "--", "--run"],
+      "workingDirectory": ".",
+      "continueOnError": false
+    },
+    {
+      "name": "Type check",
+      "command": "npm",
+      "args": ["run", "typecheck"],
+      "workingDirectory": ".",
+      "continueOnError": false
+    }
+  ]
+}
