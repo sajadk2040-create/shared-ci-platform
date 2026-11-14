@@ -174,7 +174,6 @@ function Invoke-AgentPoll {
     durationSeconds = $duration
     stdout = $stdout
     stderr = $stderr
-    machine = $env:COMPUTERNAME
   }
   $responseJson = $response | ConvertTo-Json -Depth 5
   Publish-Response -Path $responsePath -Json $responseJson
