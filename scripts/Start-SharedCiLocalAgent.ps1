@@ -126,7 +126,7 @@ function Test-ResponseExists {
   $code = $LASTEXITCODE
   if ($code -eq 0) { return $true }
   $diagnostic = ($output | Out-String).Trim()
-  if ($diagnostic -match '(?i)\bNot Found\s*\(HTTP 404\)\b|\bHTTP(?:/\d(?:\.\d)?)?\s+404\b') {
+  if ($diagnostic -match '(?i)Not Found\s*\(HTTP 404\)|HTTP(?:/\d(?:\.\d)?)?\s+404') {
     return $false
   }
   $safeDiagnostic = Protect-Output $diagnostic
