@@ -56,3 +56,11 @@ No GitHub Actions workflow was triggered, no self-hosted runner was registered, 
 - Added defensive process-tree cleanup if process setup, waiting or stream collection fails after process start; reran the full harness after this change and it passed.
 - JSON syntax parsing passed for the schema, example config, three presets and smoke-project config. Full Draft 2020-12 validation was not rerun on this host because the Python `jsonschema` package is not installed.
 - This is local runner validation only. No GitHub Actions workflow was dispatched, no self-hosted runner was registered, and no release tag was created.
+
+
+## Reusable workflow review — 2026-11-14
+
+- Parsed the current `.github/workflows/reusable.yml` with PyYAML's BaseLoader; syntax parsing passed.
+- Reviewed its least-privilege `contents: read` permission, separate caller/platform checkouts, `persist-credentials: false` on both checkouts, PowerShell 7 gate, and dedicated self-hosted Windows/X64/shared-ci labels.
+- Corrected the runner invocation to force `-OutputDirectory artifacts/ci`, ensuring the artifact upload step targets the same directory even when a consumer config chooses a different local reportDirectory.
+- No Actions workflow was dispatched. The workflow still needs a secured registered runner and a manual end-to-end run before release.
