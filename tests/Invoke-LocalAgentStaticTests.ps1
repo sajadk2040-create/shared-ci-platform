@@ -24,6 +24,8 @@ Assert-True ($source -match 'motiondeck\.git-status') "Git status task is allowl
 Assert-True ($source -match 'motiondeck\.current-commit') "Current commit task is allowlisted"
 Assert-True ($source -match 'shared-ci\.core-smoke') "Shared CI smoke task is allowlisted"
 Assert-True ($source -match 'shared-ci\.local-agent-static') "Local agent static test task is allowlisted"
+Assert-True ($source -match '\$taskInvalid = \(\$task\.Length -gt 64 -or \$task -notin \$allowedTasks\)') "Task identifiers are strictly allowlisted and length-bounded"
+Assert-True ($source -match 'responseTask = \$responseTask') "Response task metadata is bounded"
 Assert-True ($source -match 'ValidateSet\("main", "feature/local-command-agent-v1"\)') "Git ref is constrained"
 Assert-True ($source -match 'ExpectedRemote') "Checkout origin is verified"
 Assert-True ($source -match 'ExpectedBranch') "Checkout branch is verified"
