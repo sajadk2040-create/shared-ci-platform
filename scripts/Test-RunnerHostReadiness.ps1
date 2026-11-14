@@ -7,6 +7,22 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+function Get-AclInventory {
+    param([string]$Path)
+    if (-not $Path -or -not (Test-Path -LiteralPath $Path -PathType Container)) { return @() }
+    try {
+        $acl = Get-Acl -LiteralPath $Path
+        return @($acl.Access | ForEach-Object {
+            [pscustomobject]@{
+                Identity = $_.IdentityReference.Value
+                Rights = $_.FileSystemRights.ToString()
+                Type = $_.AccessControlType.ToString()
+                Inherited = [bool]$_.IsInherited
+            }
+        })
+    } catch { return @() }
+}
+
 function Get-ProcessOwner {
     param([int]$ProcessId)
     try {
@@ -80,18 +96,15 @@ try {
 $currentIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = [Security.Principal.WindowsPrincipal]::new($currentIdentity)
 $currentIsAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-$aclEntries = @()
-try {
-    $acl = Get-Acl -LiteralPath $resolvedRoot
-    $aclEntries = @($acl.Access | ForEach-Object {
-        [pscustomobject]@{
-            Identity = $_.IdentityReference.Value
-            Rights = $_.FileSystemRights.ToString()
-            Type = $_.AccessControlType.ToString()
-            Inherited = [bool]$_.IsInherited
-        }
-    })
-} catch { }
+$aclEntries = Get-AclInventory -Path $resolvedRoot
+$workFolderPath = $null
+$workFolderAcl = @()
+if ($metadata -and $metadata.workFolder) {
+    $workFolderPath = [IO.Path]::GetFullPath((Join-Path $resolvedRoot ([string]$metadata.workFolder)))
+    if ($workFolderPath.StartsWith($resolvedRoot.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
+        $workFolderAcl = Get-AclInventory -Path $workFolderPath
+    }
+}
 
 $repoMatches = ($registeredRepository -and
     $registeredRepository.Equals($ExpectedRepository, [StringComparison]::OrdinalIgnoreCase))
@@ -107,6 +120,8 @@ $report = [pscustomobject]@{
     RegisteredRepository = $registeredRepository
     RepositoryMatchesExpectation = [bool]$repoMatches
     WorkFolder = if ($metadata) { $metadata.workFolder } else { $null }
+    WorkFolderPath = $workFolderPath
+    WorkFolderAcl = $workFolderAcl
     CredentialMarkerFilesPresent = $markerState
     CredentialFileContentsRead = $false
     ListenerProcesses = $processes
