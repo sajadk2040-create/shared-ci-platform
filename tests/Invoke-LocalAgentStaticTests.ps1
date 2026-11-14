@@ -24,6 +24,9 @@ Assert-True ($source -match 'motiondeck\.git-status') "Git status task is allowl
 Assert-True ($source -match 'motiondeck\.current-commit') "Current commit task is allowlisted"
 Assert-True ($source -match 'shared-ci\.core-smoke') "Shared CI smoke task is allowlisted"
 Assert-True ($source -match 'shared-ci\.local-agent-static') "Local agent static test task is allowlisted"
+Assert-True ($source -match 'shared-ci\.host-safety') "Host safety test task is allowlisted"
+Assert-True ($source -match 'shared-ci\.filesystem-links') "Filesystem link integration task is allowlisted"
+Assert-True ($source -match 'shared-ci\.consumer-template') "Consumer template test task is allowlisted"
 Assert-True ($source -match '\$taskInvalid = \(\$task\.Length -gt 64 -or \$task -notin \$allowedTasks\)') "Task identifiers are strictly allowlisted and length-bounded"
 Assert-True ($source -match 'task = \$responseTask') "Response task metadata is bounded"
 Assert-True ($source -match 'ValidateSet\("main", "feature/local-command-agent-v1"\)') "Git ref is constrained"
@@ -72,7 +75,7 @@ Assert-True ($inbox.schemaVersion -eq 1) "Inbox schema version is 1"
 if ($null -ne $inbox.command) {
   Assert-True (-not [string]::IsNullOrWhiteSpace([string]$inbox.command.id)) "Inbox command has an ID"
   Assert-True (-not [string]::IsNullOrWhiteSpace([string]$inbox.command.task)) "Inbox command has a task"
-  Assert-True ($inbox.command.task -match '^(motiondeck\.(repository-validation|git-status|current-commit)|shared-ci\.(core-smoke|local-agent-static))$') "Inbox task is allowlisted"
+  Assert-True ($inbox.command.task -match '^(motiondeck\.(repository-validation|git-status|current-commit)|shared-ci\.(core-smoke|local-agent-static|host-safety|filesystem-links|consumer-template))$') "Inbox task is allowlisted"
   Assert-True (-not [string]::IsNullOrWhiteSpace([string]$inbox.command.issuedAt)) "Inbox command has issuedAt"
   Assert-True (-not [string]::IsNullOrWhiteSpace([string]$inbox.command.expiresAt)) "Inbox command has expiresAt"
 }
