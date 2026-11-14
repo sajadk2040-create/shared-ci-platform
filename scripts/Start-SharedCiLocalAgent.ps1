@@ -120,7 +120,7 @@ function Protect-Output {
 
 function Test-ResponseExists {
   param([string]$Path)
-  $null = & gh api "repos/$Repository/contents/$Path?ref=$Ref" --jq ".sha" 2>$null
+  $null = & gh api "repos/$Repository/contents/${Path}?ref=$Ref" --jq ".sha" 2>$null
   return ($LASTEXITCODE -eq 0)
 }
 
