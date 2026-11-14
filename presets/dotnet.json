@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "name": "dotnet-project",
+    "reportDirectory": "artifacts/ci"
+  },
+  "steps": [
+    {
+      "name": "Restore",
+      "command": "dotnet",
+      "args": ["restore"],
+      "workingDirectory": "."
+    },
+    {
+      "name": "Build",
+      "command": "dotnet",
+      "args": ["build", "--no-restore", "--configuration", "Release"],
+      "workingDirectory": "."
+    },
+    {
+      "name": "Tests",
+      "command": "dotnet",
+      "args": ["test", "--no-build", "--configuration", "Release"],
+      "workingDirectory": "."
+    }
+  ]
+}
