@@ -1,4 +1,9 @@
 {
   "schemaVersion": 1,
-  "command": null
+  "command": {
+    "id": "agent-bootstrap-static-001",
+    "task": "shared-ci.local-agent-static",
+    "issuedAt": "2026-11-14T19:51:00+03:30",
+    "expiresAt": "2026-11-14T20:51:00+03:30"
+  }
 }
