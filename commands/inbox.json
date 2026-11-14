@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "command": {
-    "id": "shared-ci-agent-allowlist-012",
-    "task": "shared-ci.local-agent-static",
-    "issuedAt": "2026-11-14T21:03:18+03:30",
-    "expiresAt": "2026-11-14T21:33:18+03:30"
+    "id": "shared-ci-host-safety-013",
+    "task": "shared-ci.host-safety",
+    "issuedAt": "2026-11-14T21:04:10+03:30",
+    "expiresAt": "2026-11-14T21:34:10+03:30"
   }
 }
