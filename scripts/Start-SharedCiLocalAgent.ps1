@@ -158,7 +158,7 @@ function Test-ResponseExists {
 }
 
 function Save-LocalResponse {
-  param([string]$CommandId,[hashtable]$Details)
+  param([string]$CommandId,[System.Collections.IDictionary]$Details)
   $base = if (-not [string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
     Join-Path $env:LOCALAPPDATA "MotionDeckStudio/SharedCiAgent/responses"
   } else {
