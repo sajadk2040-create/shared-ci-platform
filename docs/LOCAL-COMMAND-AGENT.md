@@ -40,6 +40,7 @@ Supported task IDs in v1:
 - motiondeck.git-status: report branch and short working-tree status.
 - motiondeck.current-commit: report the current MotionDeck commit.
 - shared-ci.core-smoke: run the fixed Shared CI core smoke test.
+- shared-ci.local-agent-static: run the fixed local agent parser and source-guard tests.
 
 The agent rejects expired commands, timestamps too far in the future, malformed IDs, unknown tasks, dirty or unexpected checkouts, and duplicate command IDs.
 
