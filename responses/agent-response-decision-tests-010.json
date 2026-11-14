@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "commandId": "agent-response-decision-tests-010",
+  "task": "shared-ci.local-agent-static",
+  "status": "passed",
+  "exitCode": 0,
+  "timedOut": false,
+  "startedAt": "2026-11-14T21:01:21.8630430+03:30",
+  "finishedAt": "2026-11-14T21:01:22.3609980+03:30",
+  "durationSeconds": 0.361,
+  "stdout": "PASS: local agent static safety tests\r\n",
+  "stderr": ""
+}
