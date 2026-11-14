@@ -37,6 +37,32 @@ Assert-True ($source -match 'Test-ResponseExists') "Duplicate command responses 
 Assert-True ($source -match '\$code -eq 0\) \{ return \$true \}') "Existing response is recognized only after a successful lookup"
 Assert-True ($source -match 'Not Found.*HTTP 404') "Only explicit GitHub 404 is treated as a missing response"
 Assert-True ($source -match 'Could not verify whether response') "Non-404 lookup failures stop processing instead of executing a task"
+
+# Exercise the actual response-lookup decision body with simulated gh outcomes.
+$agentAst = [System.Management.Automation.Language.Parser]::ParseFile($agentPath, [ref]$null, [ref]$null)
+$decisionAst = $agentAst.Find({
+  param($node)
+  $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+    $node.Name -eq "Get-ResponseLookupDecision"
+}, $true)
+Assert-True ($null -ne $decisionAst) "Response lookup decision helper exists"
+$decisionBlock = $decisionAst.Body.GetScriptBlock()
+function Protect-Output([string]$Value) { return $Value }
+Assert-True ((& $decisionBlock -ExitCode 0 -Diagnostic "") -eq "exists") "Successful lookup means response exists"
+Assert-True ((& $decisionBlock -ExitCode 1 -Diagnostic "gh: Not Found (HTTP 404)") -eq "missing") "Explicit CLI 404 means response is absent"
+Assert-True ((& $decisionBlock -ExitCode 1 -Diagnostic "HTTP/2.0 404 Not Found") -eq "missing") "HTTP header 404 means response is absent"
+foreach ($failure in @(
+  @{ Name = "403"; Diagnostic = "gh: Forbidden (HTTP 403)" },
+  @{ Name = "429"; Diagnostic = "gh: rate limit (HTTP 429)" },
+  @{ Name = "500"; Diagnostic = "gh: Internal Server Error (HTTP 500)" },
+  @{ Name = "network"; Diagnostic = "connection refused" },
+  @{ Name = "empty diagnostic"; Diagnostic = "" }
+)) {
+  $threw = $false
+  try { $null = & $decisionBlock -ExitCode 1 -Diagnostic $failure.Diagnostic }
+  catch { $threw = $_.Exception.Message -match "Could not verify whether response lookup succeeded" }
+  Assert-True $threw "Non-404 $($failure.Name) lookup failure fails closed"
+}
 Assert-True ($source -match '\$\{Path\}\?ref=\$Ref') "Response lookup URL delimits the path variable"
 Assert-True ($source -match 'OUTPUT TRUNCATED') "Output is bounded"
 Assert-True (Test-Path -LiteralPath $inboxPath) "Inbox file exists"
