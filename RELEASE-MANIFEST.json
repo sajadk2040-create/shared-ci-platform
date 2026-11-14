@@ -11,6 +11,6 @@
   "entrypoint": "scripts/run.ps1",
   "sourceStagingPath": ".",
   "intendedRepository": "sajadk2040-create/shared-ci-platform",
-  "releaseStatus": "imported-bootstrap-not-yet-runtime-validated",
+  "releaseStatus": "local-runtime-validated-workflow-and-release-gates-pending",
   "repository": "https://github.com/sajadk2040-create/shared-ci-platform"
 }
