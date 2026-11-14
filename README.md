@@ -36,6 +36,7 @@ The runner does not install dependencies or access the network unless an explici
 - [Adapter contract](docs/ADAPTER-CONTRACT.md)
 - [Standalone import and validation status](docs/PORTING-STATUS.md)
 - [Standalone bootstrap and release gates](docs/REPOSITORY-BOOTSTRAP.md)
+- [Local PowerShell validation guide](docs/LOCAL-VALIDATION.md)
 - [Smoke project](examples/smoke-project/README.md)
 - [Release manifest](RELEASE-MANIFEST.json)
 
