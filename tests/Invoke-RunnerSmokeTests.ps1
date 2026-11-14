@@ -124,7 +124,23 @@ try {
   } finally { Pop-Location }
   Assert-True ($absoluteConfigExit -ne 0) "absolute config path must be rejected"
 
-  Write-Host "PASS: runner smoke tests (4 groups)"
+  # Test 5: invalid schema version is rejected before any configured command runs.
+  $invalidMarker = Join-Path $projectRoot "invalid-config-command-ran.txt"
+  $invalidConfig = Join-Path $projectRoot "invalid.json"
+  Write-Config $invalidConfig ([pscustomobject]@{
+    schemaVersion = 99
+    project = @{ name = "shared-ci-smoke-invalid" }
+    steps = @(@{ name = "must-not-run"; command = $pwshPath; args = @("-NoProfile", "-Command", "Set-Content -LiteralPath '$invalidMarker' -Value ran") })
+  })
+  Push-Location $projectRoot
+  try {
+    & $pwshPath -NoProfile -File (Join-Path $platformRoot "scripts/run.ps1") -ConfigPath "invalid.json" 2>&1 | Out-Null
+    $invalidConfigExit = $LASTEXITCODE
+  } finally { Pop-Location }
+  Assert-True ($invalidConfigExit -ne 0) "unsupported schema version must be rejected"
+  Assert-True (-not (Test-Path -LiteralPath $invalidMarker)) "invalid config must be rejected before executing steps"
+
+  Write-Host "PASS: runner smoke tests (5 groups)"
   Write-Host "Temporary test workspace: $testRoot"
   $testPassed = $true
 }
