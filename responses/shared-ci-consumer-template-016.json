@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "commandId": "shared-ci-consumer-template-016",
+  "task": "shared-ci.consumer-template",
+  "status": "passed",
+  "exitCode": 0,
+  "timedOut": false,
+  "startedAt": "2026-11-14T21:27:31.5899555+03:30",
+  "finishedAt": "2026-11-14T21:27:32.0733491+03:30",
+  "durationSeconds": 0.351,
+  "stdout": "PASS: consumer template config structure\r\nPASS: consumer smoke script parses and checks repository presence\r\nPASS: consumer workflow pin and trigger safety\r\nPASS: consumer template tests (3 groups)\r\n",
+  "stderr": ""
+}
