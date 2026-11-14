@@ -117,7 +117,7 @@ try {
     $existingDirectoryAcl = Test-SharedCiExistingRunnerDirectoryState -DirectoryExists $true -IsReparsePoint $false -Rules $existingDirectoryRules -ExpectedIdentities @('S-1-5-18','S-1-5-32-544')
     Assert-True $existingDirectoryAcl.IsSafe 'an existing directory with only inherited SYSTEM/Administrators FullControl ACEs should be reusable'
     Assert-True (-not (Test-SharedCiExistingRunnerDirectoryState -DirectoryExists $true -IsReparsePoint $true -Rules $existingDirectoryRules -ExpectedIdentities @('S-1-5-18','S-1-5-32-544')).IsSafe) 'an existing reparse-point directory must not be reused'
-    Assert-True (-not (Test-SharedCiExistingRunnerDirectoryState -DirectoryExists $true -IsReparsePoint $false -Rules $validRules -ExpectedIdentities @('S-1-5-18','S-1-5-32-544')).IsSafe) 'an existing directory with extra or explicit ACEs must not be reused'
+    Assert-True (-not (Test-SharedCiExistingRunnerDirectoryState -DirectoryExists $true -IsReparsePoint $false -Rules (@($existingDirectoryRules) + @(New-TestAclRule -Identity 'S-1-5-21-999' -Inherited $true)) -ExpectedIdentities @('S-1-5-18','S-1-5-32-544')).IsSafe) 'an existing directory with an extra ACE must not be reused'
     Assert-True (-not (Test-SharedCiExistingRunnerDirectoryState -DirectoryExists $false -IsReparsePoint $false -Rules $existingDirectoryRules -ExpectedIdentities @('S-1-5-18','S-1-5-32-544')).IsSafe) 'a missing directory must not be treated as reusable'
     $validRules = @(
         (New-TestAclRule -Identity $expectedSids[0]),
