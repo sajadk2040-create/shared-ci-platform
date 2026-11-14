@@ -140,7 +140,17 @@ function Invoke-AgentPoll {
   $command = $inbox.command
   $id = [string]$command.id
   $task = [string]$command.task
-  if ($id -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}
+  if ($id -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$') { throw "Invalid command ID." }
+  if ([string]::IsNullOrWhiteSpace($task)) { throw "Command task is missing." }
+  $allowedTasks = @(
+    "motiondeck.repository-validation",
+    "motiondeck.git-status",
+    "motiondeck.current-commit",
+    "shared-ci.core-smoke",
+    "shared-ci.local-agent-static"
+  )
+  $taskInvalid = ($task.Length -gt 64 -or $task -notin $allowedTasks)
+  $responseTask = if ($task.Length -gt 64) { $task.Substring(0,64) } else { $task }
   $invariantCulture = [Globalization.CultureInfo]::InvariantCulture
   $roundtripStyle = [Globalization.DateTimeStyles]::RoundtripKind
   $issuedAt = [DateTimeOffset]::Parse([string]$command.issuedAt, $invariantCulture, $roundtripStyle)
@@ -174,80 +184,6 @@ function Invoke-AgentPoll {
     schemaVersion = 1
     commandId = $id
     task = $responseTask
-    status = $status
-    exitCode = $exitCode
-    timedOut = $timedOut
-    startedAt = $startedAt.ToString("o")
-    finishedAt = [DateTimeOffset]::Now.ToString("o")
-    durationSeconds = $duration
-    stdout = $stdout
-    stderr = $stderr
-  }
-  $responseJson = $response | ConvertTo-Json -Depth 5
-  Publish-Response -Path $responsePath -Json $responseJson
-  Write-Host "Response published: $responsePath (status=$status, exit=$exitCode)"
-}
-
-if (-not (Get-Command gh -ErrorAction SilentlyContinue)) { throw "GitHub CLI (gh) is required." }
-if (-not (Get-Command git -ErrorAction SilentlyContinue)) { throw "Git is required." }
-if (-not (Get-Command pwsh -ErrorAction SilentlyContinue)) { throw "PowerShell 7 (pwsh) is required." }
-if (-not (Test-Path -LiteralPath $MotionDeckRoot -PathType Container)) { throw "MotionDeckRoot does not exist." }
-if (-not (Test-Path -LiteralPath $SharedCiRoot -PathType Container)) { throw "SharedCiRoot does not exist." }
-$null = Invoke-Gh -Arguments @("auth","status")
-$login = Invoke-Gh -Arguments @("api","user","--jq",".login")
-Write-Host "Authenticated GitHub account: $login"
-Write-Host "Repository: $Repository"
-Write-Host "Ref: $Ref"
-Write-Host "Polling every $PollSeconds seconds. Press Ctrl+C to stop."
-do {
-  try { Invoke-AgentPoll }
-  catch { Write-Warning ("Agent poll failed: " + (Protect-Output $_.Exception.Message)) }
-  if ($Once) { break }
-  Start-Sleep -Seconds $PollSeconds
-} while ($true)
-) { throw "Invalid command ID." }
-  if ([string]::IsNullOrWhiteSpace($task)) { throw "Command task is missing." }
-  $allowedTasks = @(
-    "motiondeck.repository-validation",
-    "motiondeck.git-status",
-    "motiondeck.current-commit",
-    "shared-ci.core-smoke",
-    "shared-ci.local-agent-static"
-  )
-  $taskInvalid = ($task.Length -gt 64 -or $task -notin $allowedTasks)
-  $responseTask = if ($task.Length -gt 64) { $task.Substring(0,64) } else { $task }
-  $invariantCulture = [Globalization.CultureInfo]::InvariantCulture
-  $roundtripStyle = [Globalization.DateTimeStyles]::RoundtripKind
-  $issuedAt = [DateTimeOffset]::Parse([string]$command.issuedAt, $invariantCulture, $roundtripStyle)
-  $expiresAt = [DateTimeOffset]::Parse([string]$command.expiresAt, $invariantCulture, $roundtripStyle)
-  $now = [DateTimeOffset]::Now
-  if ($issuedAt -gt $now.AddMinutes(5)) { throw "Command issue time is too far in the future." }
-  if ($expiresAt -le $now -or $expiresAt -le $issuedAt -or $expiresAt -gt $issuedAt.AddHours(1)) { throw "Command is expired or has an invalid lifetime." }
-  $responsePath = "responses/$id.json"
-  if (Test-ResponseExists -Path $responsePath) { Write-Host "Already processed: $id"; return }
-  Write-Host "Executing allowlisted task '$task' ($id)..."
-  $startedAt = [DateTimeOffset]::Now
-  try {
-    $result = Invoke-AllowedTask -Task $task
-    $status = if ($result.exitCode -eq 0) { "passed" } else { "failed" }
-    $exitCode = [int]$result.exitCode
-    $timedOut = [bool]$result.timedOut
-    $duration = [double]$result.durationSeconds
-    $stdout = Protect-Output ([string]$result.stdout)
-    $stderr = Protect-Output ([string]$result.stderr)
-  }
-  catch {
-    $status = "rejected"
-    $exitCode = 126
-    $timedOut = $false
-    $duration = [math]::Round(([DateTimeOffset]::Now - $startedAt).TotalSeconds,3)
-    $stdout = ""
-    $stderr = Protect-Output $_.Exception.Message
-  }
-  $response = [ordered]@{
-    schemaVersion = 1
-    commandId = $id
-    task = $task
     status = $status
     exitCode = $exitCode
     timedOut = $timedOut
