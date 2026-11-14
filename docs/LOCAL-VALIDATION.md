@@ -18,7 +18,7 @@ $PSVersionTable.PSVersion
 pwsh -NoProfile -File tests/Invoke-RunnerSmokeTests.ps1
 ```
 
-The harness first parses `scripts/run.ps1` with the PowerShell language parser, then provisions a temporary project outside the repository and exercises:
+The harness parses `scripts/run.ps1` with the PowerShell language parser, provisions a temporary project, and exercises:
 
 1. successful child-process execution and JSON/Markdown/log report generation;
 2. stdout and stderr capture;
@@ -26,9 +26,11 @@ The harness first parses `scripts/run.ps1` with the PowerShell language parser, 
 4. preservation of a child process exit code of 23 and runner exit code 1;
 5. rejection of lexical project-root traversal;
 6. rejection of absolute config paths and unsupported schema versions before a configured command runs;
-7. on Windows, rejection of a directory junction that points outside the temporary project.
+7. on Windows, rejection of a directory junction that points outside the temporary project;
+8. timeout reporting and termination of a timed-out process with its spawned child;
+9. two simultaneous runs in one output directory, verifying unique run IDs and preservation of both sets of reports and stream files.
 
-The harness prints a PASS line for parser validation and a final PASS line when all applicable smoke checks finish. It exits non-zero on the first failed assertion. On failure, it retains the temporary workspace and prints its path for diagnosis; on success, it removes the temporary workspace.
+The harness prints a PASS line for parser validation and a final PASS line when all applicable checks finish. It exits non-zero on the first failed assertion. On failure, it retains the temporary workspace and prints its path for diagnosis; on success, it removes the temporary workspace.
 
 ## Evidence to record
 
