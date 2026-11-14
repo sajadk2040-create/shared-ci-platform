@@ -46,3 +46,11 @@ The reusable workflow defaults its `platform-ref` input to `v0.1.0`; therefore c
 6. Update MotionDeck's consumer workflow to call this repository at the released tag.
 
 No workflow was triggered and no PowerShell runtime test is claimed by this import.
+
+
+## Follow-up — argument disclosure reduction
+
+- Reviewed runner logging/report behavior and found that raw process arguments were persisted to the execution log and JSON report. Arguments can contain tokens or other sensitive values.
+- Updated `scripts/run.ps1` to log only the argument count and include only `argumentCount` in each step report. The original argument array is still passed unchanged to the child process.
+- Extended the smoke harness to assert that argument count is recorded while the known argument value is absent from the JSON report and log.
+- Harness remains unexecuted; this is a security hardening change with authored regression coverage, not a verified runtime fix.
