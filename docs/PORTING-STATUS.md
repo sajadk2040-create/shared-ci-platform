@@ -29,14 +29,20 @@ The reusable workflow defaults its `platform-ref` input to `v0.1.0`; therefore c
 
 `tests/Invoke-RunnerSmokeTests.ps1` is a self-contained PowerShell 7 harness. It creates an isolated temporary project and exercises six groups: successful execution and report capture; preservation of arguments containing spaces/quotes; intentional child exit code 23 and runner failure status; rejection of lexical working-directory traversal; rejection of Windows junction traversal; rejection of absolute config paths; and rejection of an unsupported schema version before any configured command executes. The harness is authored but has **not** been executed because this environment has no PowerShell runtime and remote Desktop Commander allowance is nearly exhausted. On Windows it also creates a directory junction to an outside folder and verifies that the runner rejects it; symlink/reparse-point handling still requires runtime validation.
 
+## Latest local-validation preparation
+
+- Added `docs/LOCAL-VALIDATION.md` with a reproducible Windows PowerShell 7 procedure that does not use GitHub Actions or a registered runner.
+- Extended `tests/Invoke-RunnerSmokeTests.ps1` to parse the runner source with the PowerShell language parser before executing smoke tests.
+- Updated the root README to link the local validation guide.
+- These are authored changes only. The harness has still **not** been executed; no runtime pass is claimed.
+
 ## Remaining work
 
-1. Run PowerShell 7 parser validation on `scripts/run.ps1`.
-2. Run `pwsh -NoProfile -File tests/Invoke-RunnerSmokeTests.ps1` on Windows PowerShell 7 and verify all six groups, including the junction case.
-3. Review the reparse-point checks for time-of-check/time-of-use races; the current checks reject existing reparse-point components but do not eliminate concurrent filesystem replacement.
-5. Parse the reusable workflow YAML and review permissions/checkout behavior.
-6. Decide public/private access and register a dedicated least-privilege self-hosted runner.
-7. Publish `v0.1.0` only after all applicable gates pass.
-8. Update MotionDeck's consumer workflow to call this repository at the released tag.
+1. Run `pwsh -NoProfile -File tests/Invoke-RunnerSmokeTests.ps1` on Windows PowerShell 7 and capture complete output, including the junction case.
+2. Review the reparse-point checks for time-of-check/time-of-use races; the current checks reject existing reparse-point components but do not eliminate concurrent filesystem replacement.
+3. Parse the reusable workflow YAML and review permissions/checkout behavior.
+4. Register a dedicated least-privilege self-hosted runner only after security review and user approval.
+5. Publish `v0.1.0` only after all applicable gates pass.
+6. Update MotionDeck's consumer workflow to call this repository at the released tag.
 
 No workflow was triggered and no PowerShell runtime test is claimed by this import.
