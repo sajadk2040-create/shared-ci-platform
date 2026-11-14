@@ -7,7 +7,8 @@ $preflight = Join-Path $RepositoryRoot 'scripts/Test-RunnerHostReadiness.ps1'
 $provision = Join-Path $RepositoryRoot 'scripts/Prepare-SharedCiRunnerHost.ps1'
 $audit = Join-Path $RepositoryRoot 'scripts/Test-SharedCiRunnerIsolation.ps1'
 $aclHelper = Join-Path $RepositoryRoot 'scripts/SharedCiAclRules.ps1'
-foreach ($path in @($preflight, $provision, $audit, $aclHelper)) {
+$linkIntegration = Join-Path $RepositoryRoot 'tests/Invoke-RunnerFilesystemLinkIntegrationTests.ps1'
+foreach ($path in @($preflight, $provision, $audit, $aclHelper, $linkIntegration)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Required script missing: $path" }
     $tokens = $null; $errors = $null
     [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors) | Out-Null
