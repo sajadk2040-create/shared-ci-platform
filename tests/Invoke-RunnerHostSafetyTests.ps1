@@ -72,6 +72,8 @@ try {
     Assert-True ($source.Contains('$ConfirmationText -cne $requiredConfirmation')) 'exact confirmation gate must exist'
     Assert-True ($source.Contains('Test-IsAdministrator')) 'administrator gate must exist'
     Assert-True ($source.Contains('SetAccessRuleProtection($true, $false)')) 'directory ACL inheritance must be protected'
+    Assert-True (-not $source.Contains('ConvertFrom-SecureString')) 'password must not be serialized by the script'
+    Assert-True (-not $source.Contains('ConvertTo-SecureString')) 'password must not be reconstructed from persisted text'
     Assert-True (-not $source.Contains('config.cmd')) 'provisioning must not register a runner'
     Assert-True (-not $source.Contains('svc install')) 'provisioning must not install runner service'
     Write-Host 'PASS: provisioning source safety guards'
