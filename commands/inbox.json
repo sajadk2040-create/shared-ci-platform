@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "command": {
-    "id": "shared-ci-host-safety-013",
-    "task": "shared-ci.host-safety",
-    "issuedAt": "2026-11-14T21:04:10+03:30",
-    "expiresAt": "2026-11-14T21:34:10+03:30"
+    "id": "shared-ci-filesystem-links-014",
+    "task": "shared-ci.filesystem-links",
+    "issuedAt": "2026-11-14T21:20:00+03:30",
+    "expiresAt": "2026-11-14T21:50:00+03:30"
   }
 }
