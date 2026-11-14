@@ -42,6 +42,10 @@ pwsh -NoProfile -File tests/Invoke-RunnerHostSafetyTests.ps1
 
 It validates parser syntax, synthetic runner metadata handling, credential-content non-disclosure, provisioning plan-only behavior, invalid-input rejection and static safety guards. It does not create accounts, set passwords, mutate ACLs, register runners or install services. See [Runner host safety test suite](RUNNER-HOST-SAFETY-TESTS.md).
 
+## Read-only post-provisioning isolation audit
+
+After a separately approved provisioning run on a disposable Windows VM, use `scripts/Test-SharedCiRunnerIsolation.ps1` to verify the dedicated account is enabled and non-administrative and that the runner root ACL contains only the expected protected FullControl entries. This verifier is read-only and has not yet been runtime-validated. See [Runner host isolation audit](RUNNER-HOST-ISOLATION-AUDIT.md).
+
 ## Evidence to record
 
 For a release candidate, record the following in the project handoff:
