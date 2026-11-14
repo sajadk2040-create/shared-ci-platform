@@ -140,7 +140,7 @@ try {
     Assert-True ($source.Contains('Import-Module Microsoft.PowerShell.LocalAccounts -ErrorAction Stop')) 'Apply mode must explicitly load LocalAccounts module'
     Assert-True ($source.Contains('[Environment]::Is64BitProcess')) 'Apply mode must reject 32-bit PowerShell'
     Assert-True ($source.Contains('SetAccessRuleProtection($true, $false)')) 'directory ACL inheritance must be protected'
-    Assert-True ($source.Contains("Get-SharedCiParentAclAssessment -Path $parentPath")) 'provisioning must inspect the parent path and existing ancestors before Apply'
+    Assert-True ($source.Contains('Get-SharedCiParentAclAssessment -Path $parentPath')) 'provisioning must inspect the parent path and existing ancestors before Apply'
     Assert-True ($source.Contains('ParentAclAssessment = $parentAclAssessment')) 'plan output must include the parent ACL assessment'
     Assert-True ($source.Contains('if (-not $parentAclAssessment.IsSafe)')) 'Apply mode must fail closed when parent ACL assessment is unsafe'
     Assert-True ($source.Contains('dedicated parent directory must exist before Apply')) 'Apply mode must never create an unreviewed parent directory'
