@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "command": {
-    "id": "motiondeck-current-commit-001",
-    "task": "motiondeck.current-commit",
-    "issuedAt": "2026-11-14T20:42:10+03:30",
-    "expiresAt": "2026-11-14T21:12:10+03:30"
+    "id": "agent-static-hardening-001",
+    "task": "shared-ci.local-agent-static",
+    "issuedAt": "2026-11-14T20:43:40+03:30",
+    "expiresAt": "2026-11-14T21:13:40+03:30"
   }
 }
