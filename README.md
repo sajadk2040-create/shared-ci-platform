@@ -33,6 +33,7 @@ The runner does not install dependencies or access the network unless an explici
 
 - [Project adoption guide](docs/PROJECT-ADOPTION.md)
 - [Adapter contract](docs/ADAPTER-CONTRACT.md)
+- [Standalone import and validation status](docs/PORTING-STATUS.md)
 - [Standalone bootstrap and release gates](docs/REPOSITORY-BOOTSTRAP.md)
 - [Smoke project](examples/smoke-project/README.md)
 - [Release manifest](RELEASE-MANIFEST.json)
