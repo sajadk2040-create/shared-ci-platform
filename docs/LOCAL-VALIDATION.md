@@ -9,58 +9,49 @@ This repository can be validated on a developer-controlled Windows machine witho
 - A clean checkout of this repository.
 - No GitHub token, repository secret, or production credential is needed.
 
-## Run validation
+## Core runner validation
 
-Open PowerShell 7 in the repository root and run:
+From the repository root:
 
 ```powershell
 $PSVersionTable.PSVersion
 pwsh -NoProfile -File tests/Invoke-RunnerSmokeTests.ps1
 ```
 
-The harness parses `scripts/run.ps1` with the PowerShell language parser, provisions a temporary project, and exercises:
-
-1. successful child-process execution and JSON/Markdown/log report generation;
-2. stdout and stderr capture;
-3. exact argument boundaries for values containing spaces and quotes, while confirming raw argument values are absent from persisted reports/logs;
-4. preservation of a child process exit code of 23 and runner exit code 1;
-5. rejection of lexical project-root traversal;
-6. rejection of absolute config paths and unsupported schema versions before a configured command runs;
-7. on Windows, rejection of a directory junction that points outside the temporary project;
-8. timeout reporting and termination of a timed-out process with its spawned child;
-9. two simultaneous runs in one output directory, verifying unique run IDs and preservation of both sets of reports and stream files.
-
-The harness prints a PASS line for parser validation and a final PASS line when all applicable checks finish. It exits non-zero on the first failed assertion. On failure, it retains the temporary workspace and prints its path for diagnosis; on success, it removes the temporary workspace.
+The core harness exercises child-process execution, report generation, stdout/stderr capture, exact argument boundaries, exit-code handling, lexical path confinement, invalid-config rejection, Windows junction traversal, timeout process-tree termination, and concurrent report isolation. It exits non-zero on the first failed assertion.
 
 ## Runner host safety tests
-
-The host preparation and preflight scripts have a separate non-provisioning test harness:
 
 ```powershell
 pwsh -NoProfile -File tests/Invoke-RunnerHostSafetyTests.ps1
 ```
 
-It validates parser syntax, synthetic runner metadata handling, credential-content non-disclosure, provisioning plan-only behavior, invalid-input rejection and static safety guards. It does not create accounts, set passwords, mutate ACLs, register runners or install services. See [Runner host safety test suite](RUNNER-HOST-SAFETY-TESTS.md).
+This non-provisioning harness validates parser syntax, runner metadata handling, credential-content non-disclosure, provisioning plan-only behavior, ACL assessment cases, isolation-audit source guards and static provisioning safety checks. It does not create accounts, set passwords, mutate ACLs, register runners or install services.
+
+## Real Windows filesystem-link integration
+
+This opt-in test creates a real junction in a unique temporary directory and verifies the actual filesystem attributes. It also attempts a symbolic link, reporting SKIP if the environment does not permit creating one.
+
+```powershell
+pwsh -NoProfile -File tests/Invoke-RunnerFilesystemLinkIntegrationTests.ps1 -EnableFilesystemLinkTests
+```
+
+Run only on a disposable or approved Windows test host. The script does not touch runner installation paths and cleans up only its unique temporary fixture. Junction creation is required; symbolic-link creation is environment-dependent.
 
 ## Read-only post-provisioning isolation audit
 
-After a separately approved provisioning run on a disposable Windows VM, use `scripts/Test-SharedCiRunnerIsolation.ps1` to verify the dedicated account is enabled and non-administrative and that the runner root ACL contains only the expected protected FullControl entries. This verifier is read-only and has not yet been runtime-validated. See [Runner host isolation audit](RUNNER-HOST-ISOLATION-AUDIT.md).
+Only after a separately approved provisioning run on a disposable Windows VM:
+
+```powershell
+pwsh -NoProfile -File scripts/Test-SharedCiRunnerIsolation.ps1 -AccountName svc-shared-ci -RunnerRoot C:\GitHubRunners\shared-ci
+```
+
+The verifier is read-only. It checks the dedicated account, local Administrators membership, protected ACL entries and reparse points along the runner-root ancestor chain. Its current revision still requires Windows runtime validation. See [Runner host isolation audit](RUNNER-HOST-ISOLATION-AUDIT.md).
 
 ## Evidence to record
 
-For a release candidate, record the following in the project handoff:
-
-- Windows edition/build;
-- `$PSVersionTable.PSVersion`;
-- exact harness command;
-- complete console output;
-- confirmation that the junction test ran (Windows only);
-- commit SHA tested.
-
-Do not include machine-specific secrets, environment variables containing credentials, or private paths in public logs.
-
-Use [the validation evidence template](VALIDATION-RESULTS-TEMPLATE.md) to capture the runtime version, tested commit and results. Keep the filled-in copy local until machine-specific details have been reviewed and redacted.
+For each validation run, record the Windows edition/build, PowerShell version, exact command, complete console output, whether junction and symbolic-link tests ran or were skipped, and the tested commit SHA. Redact machine-specific paths and identities before publishing. Use [the validation evidence template](VALIDATION-RESULTS-TEMPLATE.md).
 
 ## Boundaries
 
-This is a local validation path. It does not dispatch GitHub Actions, register a runner, publish a release tag, or prove that the reusable workflow succeeds on a self-hosted runner. Those remain separate release gates. The path reparse-point check is defense-in-depth and does not eliminate concurrent time-of-check/time-of-use races; run only trusted configuration in an isolated, least-privilege workspace.
+Local validation does not dispatch GitHub Actions, register a runner, publish a release tag, or prove the reusable workflow succeeds on a self-hosted runner. The reparse-point check is defense-in-depth and does not eliminate concurrent time-of-check/time-of-use races. Run only trusted configuration in an isolated, least-privilege workspace.
