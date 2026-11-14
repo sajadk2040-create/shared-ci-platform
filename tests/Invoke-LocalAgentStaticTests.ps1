@@ -28,6 +28,7 @@ Assert-True ($source -match 'expiresAt') "Command expiry is checked"
 Assert-True ($source -match 'ConvertFrom-Json -DateKind String') "Inbox timestamps remain ISO strings during JSON parsing"
 Assert-True ($source -match 'CultureInfo\]::InvariantCulture') "Timestamp parsing is culture-invariant"
 Assert-True ($source -match 'Test-ResponseExists') "Duplicate command responses are checked"
+Assert-True ($source -match '\$\{Path\}\?ref=\$Ref') "Response lookup URL delimits the path variable"
 Assert-True ($source -match 'OUTPUT TRUNCATED') "Output is bounded"
 Assert-True (Test-Path -LiteralPath $inboxPath) "Inbox file exists"
 
