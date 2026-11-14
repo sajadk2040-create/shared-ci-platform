@@ -1,9 +1,4 @@
 {
   "schemaVersion": 1,
-  "command": {
-    "id": "shared-ci-agent-static-018",
-    "task": "shared-ci.local-agent-static",
-    "issuedAt": "2026-11-14T21:28:00+03:30",
-    "expiresAt": "2026-11-14T21:58:00+03:30"
-  }
+  "command": null
 }
