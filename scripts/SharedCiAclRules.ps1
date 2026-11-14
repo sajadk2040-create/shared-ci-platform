@@ -181,3 +181,32 @@ function Get-SharedCiParentAclAssessment {
         Notes = 'The existing parent must have exactly two explicit inheritable FullControl Allow ACEs: SYSTEM and local Administrators. Ancestors are checked for reparse points, inspection failures, and broad-principal DeleteSubdirectoriesAndFiles rights. Broad create-directory rights on an ancestor do not invalidate an already-existing protected parent.'
     }
 }
+
+function Test-SharedCiExistingRunnerDirectoryState {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][bool]$DirectoryExists,
+        [Parameter(Mandatory=$true)][bool]$IsReparsePoint,
+        [Parameter(Mandatory=$true)][object[]]$Rules,
+        [Parameter(Mandatory=$true)][string[]]$ExpectedIdentities
+    )
+    $expected = @($ExpectedIdentities | Sort-Object -Unique)
+    $unexpected = @($Rules | Where-Object {
+        $_.AccessControlType -ne 'Allow' -or
+        $_.Identity -notin $expected -or
+        $_.Rights -ne 'FullControl' -or
+        $_.InheritanceFlags -ne 'ContainerInherit, ObjectInherit' -or
+        $_.PropagationFlags -ne 'None' -or
+        -not [bool]$_.IsInherited
+    })
+    $seen = @($Rules | ForEach-Object { [string]$_.Identity } | Sort-Object -Unique)
+    $missing = @($expected | Where-Object { $_ -notin $seen })
+    [pscustomobject]@{
+        IsSafe = ($DirectoryExists -and -not $IsReparsePoint -and $Rules.Count -eq $expected.Count -and $unexpected.Count -eq 0 -and $missing.Count -eq 0)
+        DirectoryExists = $DirectoryExists
+        IsReparsePoint = $IsReparsePoint
+        RuleCount = $Rules.Count
+        UnexpectedRuleCount = $unexpected.Count
+        MissingPrincipalCount = $missing.Count
+    }
+}
