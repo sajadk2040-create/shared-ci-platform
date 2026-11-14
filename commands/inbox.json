@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "command": {
-    "id": "security-core-smoke-20261114-2143",
-    "task": "shared-ci.core-smoke",
-    "issuedAt": "2026-11-14T21:43:00+03:30",
-    "expiresAt": "2026-11-14T21:53:00+03:30"
+    "id": "security-host-safety-20261114-2144",
+    "task": "shared-ci.host-safety",
+    "issuedAt": "2026-11-14T21:44:00+03:30",
+    "expiresAt": "2026-11-14T21:54:00+03:30"
   }
 }
