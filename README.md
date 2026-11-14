@@ -11,7 +11,7 @@ A portable command-based CI runner for local development and dedicated self-host
 - PowerShell 7 command runner with explicit executable + argument arrays (no implicit shell command strings).
 - Project configuration contract and JSON Schema v1.
 - Starter presets for Node.js, Python and .NET.
-- Timestamped JSON, Markdown, stdout/stderr and log reports.
+- Timestamped JSON, Markdown, stdout/stderr and log reports; raw process arguments are not copied into JSON/log metadata.
 - Project-root path confinement for config, output and step working directories.
 - Smoke fixtures for successful execution and intentional exit-code-23 failure.
 - PowerShell smoke-test harness covering argument boundaries, report capture, exit-code handling, lexical traversal, Windows junction traversal and invalid-config rejection.
