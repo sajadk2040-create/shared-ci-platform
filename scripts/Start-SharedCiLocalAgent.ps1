@@ -44,9 +44,11 @@ function Invoke-FixedProcess {
   $process = [System.Diagnostics.Process]::new()
   $started = Get-Date
   $timedOut = $false
+  $processStarted = $false
   try {
     $process.StartInfo = $startInfo
     if (-not $process.Start()) { throw "Process failed to start: $FileName" }
+    $processStarted = $true
     $stdoutTask = $process.StandardOutput.ReadToEndAsync()
     $stderrTask = $process.StandardError.ReadToEndAsync()
     if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
@@ -66,7 +68,7 @@ function Invoke-FixedProcess {
     }
   }
   finally {
-    if ($process -and -not $process.HasExited) { try { $process.Kill($true); $process.WaitForExit() } catch {} }
+    if ($processStarted -and -not $process.HasExited) { try { $process.Kill($true); $process.WaitForExit() } catch {} }
     $process.Dispose()
   }
 }
