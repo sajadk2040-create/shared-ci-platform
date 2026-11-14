@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "name": "Replace with your project name",
+    "reportDirectory": "artifacts/ci"
+  },
+  "steps": [
+    {
+      "name": "Repository smoke checks",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "scripts/ci-smoke.ps1"
+      ],
+      "workingDirectory": ".",
+      "timeoutSeconds": 60
+    }
+  ]
+}
