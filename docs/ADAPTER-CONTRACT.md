@@ -27,6 +27,8 @@ The runner records start/end time, duration, exit code, stdout/stderr filenames,
 - Python: pin dependencies and preferably commit a lock/constraints file; change the preset install command to match the chosen manager.
 - .NET: commit project/solution files and pin SDK with `global.json` where reproducibility requires it.
 - Do not install tools globally from project scripts.
+- Never pass secrets as literal command arguments; use the runner host's protected secret/environment mechanism when a trusted workflow needs credentials. The runner does not persist raw argument values, but operating-system process inspection may still expose arguments while a child is running.
+- Child stdout/stderr are captured verbatim and may contain secrets if the child prints them. Do not print credentials, and do not upload reports from jobs that may emit secret material. Treat artifacts as sensitive.
 - Network access occurs only if a configured step explicitly invokes a package manager or downloader; the core runner itself does not access the network.
 
 ## Security
