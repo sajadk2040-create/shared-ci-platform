@@ -4,7 +4,7 @@ A portable command-based CI runner for local development and dedicated self-host
 
 ## Status
 
-**Local runtime validation passed for the core runner and the initial host-safety harness.** The eight-group Windows PowerShell 7.6.9 core smoke suite passed on commit `068a78027c74d023f13abf00122de14bb1d55461`, including timeout process-tree termination and concurrent report isolation. The runner-host safety harness subsequently passed its three groups on the Windows 11 host after the Plan-only compatibility fix. Its five-group host-safety suite and opt-in real-filesystem-link integration script are committed but have not yet been rerun on Windows. The real-link script requires an actual junction; symbolic-link creation may be skipped when Windows policy prevents it. No provisioning, account creation, ACL mutation, runner registration, or service installation has been performed. GitHub Actions/self-hosted workflow validation and release gates remain outstanding. The release manifest's `0.1.0` remains a bootstrap target, not a production release. See [release gates](docs/REPOSITORY-BOOTSTRAP.md).
+**Local runtime validation passed for the core runner, and the full suite now runs in CI.** The eight-group PowerShell 7.6.9 core smoke suite, the five-group runner-host safety suite, the real Windows filesystem-link integration script and the smoke-project fixtures all passed on the repository's dedicated self-hosted Windows runner (`win-docker-01`, runner `2.338.2`, PowerShell `7.6.9`) via `.github/workflows/ci.yml`; see [CI validation results](docs/CI-VALIDATION-RESULTS.md) for the run IDs. The real-link script created an actual junction, so the previously outstanding Windows re-run of the host-safety and filesystem-link suites is now executed evidence. No provisioning, account creation, ACL mutation, runner registration or service installation is performed by the platform itself, and the runner still starts from `run.cmd` rather than a Windows service. Branch protection, the stacked security pull requests and the release gates remain outstanding: the release manifest's `0.1.0` is still a bootstrap target, not a production release, and no `v0.1.0` tag exists yet. See [release gates](docs/REPOSITORY-BOOTSTRAP.md).
 
 ## Features
 
@@ -39,6 +39,7 @@ The runner does not install dependencies or access the network unless an explici
 - [Adapter contract](docs/ADAPTER-CONTRACT.md)
 - [Standalone import and validation status](docs/PORTING-STATUS.md)
 - [Standalone bootstrap and release gates](docs/REPOSITORY-BOOTSTRAP.md)
+- [CI validation results](docs/CI-VALIDATION-RESULTS.md)
 - [Local PowerShell validation guide](docs/LOCAL-VALIDATION.md)
 - [Self-hosted runner security review](docs/SELF-HOSTED-RUNNER-SECURITY-REVIEW.md)
 - [Read-only runner host preflight](docs/RUNNER-HOST-PREFLIGHT.md)
