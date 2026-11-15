@@ -33,7 +33,7 @@ Assert-True ($source -match 'A 64-bit PowerShell 7 executable was not found') "A
 Assert-True ($source -notmatch '-FileName "pwsh"') "Tasks do not rely on ambiguous PATH resolution for pwsh"
 Assert-True ($source -match '\$taskInvalid = \(\$task\.Length -gt 64 -or \$task -notin \$allowedTasks\)') "Task identifiers are strictly allowlisted and length-bounded"
 Assert-True ($source -match 'task = \$responseTask') "Response task metadata is bounded"
-Assert-True ($source -match 'ValidateSet\("main", "feature/local-command-agent-v1", "security/metadata-only-local-agent-v1"\)') "Git ref is constrained to approved branches including the security branch"
+Assert-True ($source -match 'ValidateSet\("main", "feature/local-command-agent-v1", "security/metadata-only-local-agent-v1", "security/workflow-gates-v1"\)') "Git ref is constrained to approved branches including the security branch"
 Assert-True ($source -match 'ExpectedRemote') "Checkout origin is verified"
 Assert-True ($source -match 'ExpectedBranch') "Checkout branch is verified"
 Assert-True ($source -match 'status --porcelain') "Dirty worktrees are rejected"
