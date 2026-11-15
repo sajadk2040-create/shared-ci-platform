@@ -103,9 +103,12 @@ foreach ($step in $config.steps) {
   $started = Get-Date
   $stdoutFile = Join-Path $outDir "$runId-step-$($results.Count + 1).out"
   $stderrFile = Join-Path $outDir "$runId-step-$($results.Count + 1).err"
-  # Arguments may contain credentials or other sensitive values. Never copy them
-  # into logs or reports; they are still passed unchanged to the child process.
-  Add-Content -LiteralPath $logPath -Value "[$($started.ToString('o'))] START $($step.name): $($step.command) (argumentCount=$($argsList.Count))"
+  # Arguments and machine-specific executable/workspace paths may be sensitive.
+  # Keep only the executable name in shared logs and reports; pass the original
+  # command and working directory unchanged to the child process.
+  $commandName = [System.IO.Path]::GetFileName([string]$step.command)
+  $reportedWorkingDirectory = [System.IO.Path]::GetRelativePath($repoRoot, $stepDir)
+  Add-Content -LiteralPath $logPath -Value "[$($started.ToString('o'))] START $($step.name): $commandName (argumentCount=$($argsList.Count))"
 
   try {
     # ProcessStartInfo.ArgumentList preserves argument boundaries (including spaces)
@@ -174,11 +177,11 @@ foreach ($step in $config.steps) {
   Add-Content -LiteralPath $logPath -Value "[$($ended.ToString('o'))] END $($step.name): exit=$exitCode"
   $results.Add([pscustomobject]@{
     name = [string]$step.name
-    command = [string]$step.command
+    command = $commandName
     argumentCount = [int]$argsList.Count
     timeoutSeconds = if ($null -ne $step.timeoutSeconds) { [int]$step.timeoutSeconds } else { $null }
     timedOut = [bool]$timedOut
-    workingDirectory = [string]$stepDir
+    workingDirectory = $reportedWorkingDirectory
     exitCode = [int]$exitCode
     status = if ($success) { "passed" } else { "failed" }
     continueOnError = [bool]$step.continueOnError
