@@ -95,8 +95,8 @@ try {
     Assert-True (-not (Test-SharedCiParentAclState -ParentExists $false -ParentAclValid $true -ParentAclProtected $true -ReparsePointCount 0 -InspectionErrorCount 0 -AncestorDeleteChildCount 0)) 'a missing parent must fail closed'
     Assert-True (-not (Test-SharedCiParentAclState -ParentExists $true -ParentAclValid $false -ParentAclProtected $true -ReparsePointCount 0 -InspectionErrorCount 0 -AncestorDeleteChildCount 0)) 'an unexpected parent ACL must fail closed'
     Assert-True (-not (Test-SharedCiParentAclState -ParentExists $true -ParentAclValid $true -ParentAclProtected $true -ReparsePointCount 1 -InspectionErrorCount 0 -AncestorDeleteChildCount 0)) 'a reparse-point ancestor must fail closed'
-    Assert-True (-not (Test-SharedCiParentAclState -ParentExists $true -ParentAclValid $true -ReparsePointCount 0 -InspectionErrorCount 1 -AncestorDeleteChildCount 0)) 'an ACL inspection error must fail closed'
-    Assert-True (-not (Test-SharedCiParentAclState -ParentExists $true -ParentAclValid $true -ReparsePointCount 0 -InspectionErrorCount 0 -AncestorDeleteChildCount 1)) 'broad ancestor DeleteSubdirectoriesAndFiles must fail closed'
+    Assert-True (-not (Test-SharedCiParentAclState -ParentExists $true -ParentAclValid $true -ParentAclProtected $true -ReparsePointCount 0 -InspectionErrorCount 1 -AncestorDeleteChildCount 0)) 'an ACL inspection error must fail closed'
+    Assert-True (-not (Test-SharedCiParentAclState -ParentExists $true -ParentAclValid $true -ParentAclProtected $true -ReparsePointCount 0 -InspectionErrorCount 0 -AncestorDeleteChildCount 1)) 'broad ancestor DeleteSubdirectoriesAndFiles must fail closed'
     Assert-True (-not $parentAssessment.ParentExists -and -not $parentAssessment.IsSafe) 'a missing dedicated parent must be reported unsafe without substituting the drive root'
     Assert-True ($parentAssessment.ExistingAncestorChecked -eq $null) 'missing parent assessment must not silently fall back to a different directory'
     $normalAttributes = [IO.FileAttributes]::Directory
