@@ -53,9 +53,21 @@ jobs:
         continue-on-error: true
         run: pwsh -NoProfile -File tests/Invoke-RunnerFilesystemLinkIntegrationTests.ps1 -EnableFilesystemLinkTests
 
-      - name: Run smoke project config
+      - name: Run smoke project config (success fixture)
         shell: pwsh
-        run: pwsh -NoProfile -File scripts/run.ps1 -ConfigPath examples/smoke-project/ci.project.json
+        working-directory: examples/smoke-project
+        run: pwsh -NoProfile -File ../../scripts/run.ps1 -ConfigPath ci.project.json
+
+      - name: Run smoke project config (intentional failure fixture must exit non-zero)
+        shell: pwsh
+        working-directory: examples/smoke-project
+        run: |
+          pwsh -NoProfile -File ../../scripts/run.ps1 -ConfigPath ci.project.expected-failure.json
+          if ($LASTEXITCODE -eq 0) {
+            throw 'The intentional failure fixture was expected to exit non-zero but exited 0.'
+          }
+          Write-Host "Intentional failure fixture exited with $LASTEXITCODE as expected."
+          exit 0
 
       - name: Consumer template tests (opt-in)
         shell: pwsh
