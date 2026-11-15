@@ -1,9 +1,4 @@
 {
   "schemaVersion": 1,
-  "command": {
-    "id": "core-smoke-20261115-12705c42",
-    "task": "shared-ci.core-smoke",
-    "issuedAt": "2026-11-15T10:56:11.9595676+03:30",
-    "expiresAt": "2026-11-15T11:16:11.9595676+03:30"
-  }
+  "command": null
 }
