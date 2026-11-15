@@ -1,6 +1,6 @@
 # Standalone repository import status
 
-**Status:** expanded eight-group Windows PowerShell 7.6.9 runtime smoke suite passed on `068a78027c74d023f13abf00122de14bb1d55461`. The core runtime is validated at the recorded commit; latest host-isolation audit and ACL harness additions are authored but await a fresh Windows execution. GitHub workflow validation, runner provisioning and release gates remain outstanding.
+**Status:** expanded eight-group Windows PowerShell 7.6.9 runtime smoke suite passed on `068a78027c74d023f13abf00122de14bb1d55461`. The five-group host-safety suite, the real Windows filesystem-link integration script and the smoke-project fixtures have now also executed and passed on the self-hosted runner via `.github/workflows/ci.yml` (runs `43765401540` and `43765594431`, PowerShell `7.6.9`, runner `2.338.2`); see `docs/CI-VALIDATION-RESULTS.md`. Runner service installation, branch protection and the release gates remain outstanding.
 
 ## Imported from MotionDeck staging
 
@@ -25,6 +25,19 @@ The reusable workflow defaults its `platform-ref` input to `v0.1.0`; therefore c
 - The initial Windows PowerShell 7.6.9 run of `tests/Invoke-RunnerSmokeTests.ps1` passed on the tested checkout. The harness returned exit code 0 and confirmed parser validation, successful execution/report capture, argument boundaries and redaction, child exit-code handling, lexical traversal rejection, Windows junction rejection, absolute config rejection, and invalid schema-version rejection.
 - The run generated expected pass and intentional-failure reports in an isolated temporary directory; the intentional child failure was correctly recognized by the harness.
 - The tested checkout was `f90d57348d261edaff0be74766d0911f6ab89bca`. This predates the latest timeout and concurrency changes; it is evidence only for the initial six-group harness, not for the new features.
+
+## GitHub Actions validation history
+
+- **2026-11-15** — `.github/workflows/ci.yml` added and merged. First executions on the self-hosted runner
+  `win-docker-01` (runner `2.338.2`, PowerShell `7.6.9`, Windows `10.0.26300`): core smoke suite, host-safety
+  suite, real filesystem-link integration (actual junction created), smoke-project success fixture, smoke-project
+  intentional-failure fixture (exit 23 asserted) and the consumer template tests all passed. Run `43765594431`
+  on `main` and run `43765401540` on `ci/verify-self-check`, 12/12 steps each, 38 s each.
+- The first attempt (run `43765317799`) failed because the smoke fixture was invoked from the repository root;
+  `scripts/run.ps1` resolves project-relative paths against the current location, so the fixture has to run from
+  its own directory. The workflow now does that and the defect is recorded in `docs/CI-VALIDATION-RESULTS.md`.
+- The workflow intentionally has no `pull_request` trigger: the repository is public and a persistent
+  self-hosted runner must not execute untrusted fork code.
 
 ## Latest engineering changes
 
