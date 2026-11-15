@@ -7,9 +7,9 @@ The standalone repository has been created and populated. Its root contains the 
 ## Consumer contract
 
 1. Commit a root-level `ci.project.json` conforming to `schemas/ci-project.schema.json`.
-2. Add a caller workflow that invokes the reusable workflow from a reviewed versioned tag or commit SHA.
-3. Register a dedicated runner with the `shared-ci` label before enabling dispatch.
-4. Use protected branches and trusted code only on this runner.
+2. Add a caller workflow that invokes the reusable workflow from a reviewed immutable commit SHA.
+3. Register a dedicated runner in the consumer repository scope, or use an organization runner group restricted to approved consumer repositories. A runner registered only to this platform repository is not automatically available to consumer repositories.
+4. Use a protected caller branch and trusted code only on this persistent runner.
 5. Keep the report output under `artifacts/ci` for the reusable workflow artifact upload.
 
 ## Local runtime validation
@@ -23,16 +23,20 @@ The harness is a local runner test. It does not validate the GitHub reusable wor
 - The workflow checks out the caller project and platform source into separate directories.
 - Both checkouts disable persisted Git credentials.
 - Workflow permissions are limited to `contents: read`.
-- The job runs only on a dedicated self-hosted Windows/X64 runner with the `shared-ci` label.
+- The reusable job runs only for manual dispatches from a protected caller ref.
+- The job requires a dedicated self-hosted Windows/X64 runner with the `shared-ci` label.
+- The platform ref must be a full 40-character hexadecimal commit SHA.
+- Third-party actions are pinned to full commit SHAs.
 - The runner's output directory is explicitly set to `artifacts/ci`, matching the artifact upload path.
+- Report artifacts are retained for three days and must still be reviewed for sensitive output.
 - Do not run untrusted fork pull-request code on a privileged self-hosted runner.
 
 ## Release gates
 
 Do not publish `v0.1.0` until all of the following are complete:
 - The expanded local PowerShell 7 smoke harness passes on the release candidate.
-- The reusable workflow YAML is parsed and reviewed.
-- A dedicated least-privilege self-hosted runner is provisioned, isolated and security-reviewed.
+- The reusable workflow YAML is parsed and reviewed, including the manual/protected-ref conditions.
+- A dedicated least-privilege self-hosted runner is provisioned in the correct consumer scope, isolated and security-reviewed.
 - A manual workflow run succeeds on that runner using a reviewed platform commit.
 - Artifact upload is verified and reviewed for secret leakage.
 - The release artifact contains no secrets or machine-specific paths.
