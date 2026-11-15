@@ -32,9 +32,15 @@ jobs:
       platform-ref: <same-reviewed-workflow-commit-sha>
 ```
 
-Replace both placeholders with the same reviewed 40-character commit SHA. The workflow intentionally has no default for `platform-ref`; callers cannot silently track a moving branch. The example uses manual dispatch until a dedicated isolated runner is secured and registered. Do not add fork pull-request triggers or enable automatic triggers on a persistent self-hosted runner.
+Replace both placeholders with the same reviewed 40-character commit SHA. The workflow intentionally has no default for `platform-ref`; callers cannot silently track a moving branch. The reusable workflow independently rejects non-`workflow_dispatch` caller events, requires `github.ref_protected == true`, and validates that `platform-ref` is exactly 40 hexadecimal characters before checking out the platform repository. Configure branch protection or a ruleset on the consumer branch used for manual dispatch. Do not add fork pull-request triggers or enable automatic triggers on a persistent self-hosted runner.
+
+The reusable workflow pins its GitHub Actions to full commit SHAs. Report artifacts are retained for three days; they can still contain sensitive test output, so restrict repository access and inspect artifact contents before treating them as safe to share.
 
 The workflow runs the platform core smoke suite, non-provisioning host-safety suite, and real Windows filesystem-link integration suite before executing the consumer config. The link test creates a unique temporary fixture, requires a real junction, and reports SKIP if symbolic-link creation is not permitted.
+
+## Runner scope and registration
+
+A reusable workflow job runs in the caller repository's context. A runner registered only at the shared-ci-platform repository scope is not automatically available to a different consumer repository. Before enabling a consumer, register a dedicated runner at that consumer repository scope, or use an organization runner group explicitly restricted to approved consumer repositories. Do not broaden runner access to all repositories. For this personal-account setup, a separate runner per consumer repository is the simpler supported model.
 
 ## Presets and schema
 
