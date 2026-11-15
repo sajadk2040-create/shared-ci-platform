@@ -73,11 +73,12 @@ function Test-SharedCiParentAclState {
     param(
         [Parameter(Mandatory=$true)][bool]$ParentExists,
         [Parameter(Mandatory=$true)][bool]$ParentAclValid,
+        [Parameter(Mandatory=$true)][bool]$ParentAclProtected,
         [Parameter(Mandatory=$true)][int]$ReparsePointCount,
         [Parameter(Mandatory=$true)][int]$InspectionErrorCount,
         [Parameter(Mandatory=$true)][int]$AncestorDeleteChildCount
     )
-    return ($ParentExists -and $ParentAclValid -and $ReparsePointCount -eq 0 -and $InspectionErrorCount -eq 0 -and $AncestorDeleteChildCount -eq 0)
+    return ($ParentExists -and $ParentAclValid -and $ParentAclProtected -and $ReparsePointCount -eq 0 -and $InspectionErrorCount -eq 0 -and $AncestorDeleteChildCount -eq 0)
 }
 
 function Get-SharedCiParentAclAssessment {
@@ -100,6 +101,7 @@ function Get-SharedCiParentAclAssessment {
             AncestorDeleteChildEntries = @()
             InspectionErrors = @()
             ParentAclAssessment = $null
+            ParentAclProtected = $false
             BroadPrincipalSidsChecked = $broadSids
             Notes = 'The dedicated parent directory must be created and secured by an administrator before provisioning. Missing parents are never created automatically.'
         }
@@ -111,6 +113,7 @@ function Get-SharedCiParentAclAssessment {
     $reparse = @()
     $inspectionErrors = @()
     $parentAclAssessment = $null
+    $parentAclProtected = $false
     $current = [IO.DirectoryInfo]::new($requested).FullName
     $isFirst = $true
 
@@ -124,6 +127,7 @@ function Get-SharedCiParentAclAssessment {
             $rules = @($acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier]))
 
             if ($isFirst) {
+                $parentAclProtected = [bool]$acl.AreAccessRulesProtected
                 $normalizedRules = @($rules | ForEach-Object {
                     [pscustomobject]@{
                         Identity = $_.IdentityReference.Value
@@ -164,7 +168,7 @@ function Get-SharedCiParentAclAssessment {
         $isFirst = $false
     }
 
-    $safe = Test-SharedCiParentAclState -ParentExists $true -ParentAclValid ([bool]$parentAclAssessment.IsValid -and $broadWrite.Count -eq 0) -ReparsePointCount $reparse.Count -InspectionErrorCount $inspectionErrors.Count -AncestorDeleteChildCount $ancestorDeleteChild.Count
+    $safe = Test-SharedCiParentAclState -ParentExists $true -ParentAclValid ([bool]$parentAclAssessment.IsValid -and $broadWrite.Count -eq 0) -ParentAclProtected $parentAclProtected -ReparsePointCount $reparse.Count -InspectionErrorCount $inspectionErrors.Count -AncestorDeleteChildCount $ancestorDeleteChild.Count
 
     [pscustomobject]@{
         IsSafe = $safe
@@ -177,8 +181,9 @@ function Get-SharedCiParentAclAssessment {
         AncestorDeleteChildEntries = $ancestorDeleteChild
         InspectionErrors = $inspectionErrors
         ParentAclAssessment = $parentAclAssessment
+        ParentAclProtected = $parentAclProtected
         BroadPrincipalSidsChecked = $broadSids
-        Notes = 'The existing parent must have exactly two explicit inheritable FullControl Allow ACEs: SYSTEM and local Administrators. Ancestors are checked for reparse points, inspection failures, and broad-principal DeleteSubdirectoriesAndFiles rights. Broad create-directory rights on an ancestor do not invalidate an already-existing protected parent.'
+        Notes = 'The existing parent must have protected ACL inheritance and exactly two explicit inheritable FullControl Allow ACEs: SYSTEM and local Administrators. Ancestors are checked for reparse points, inspection failures, and broad-principal DeleteSubdirectoriesAndFiles rights. Broad create-directory rights on an ancestor do not invalidate an already-existing protected parent.'
     }
 }
 
