@@ -26,7 +26,7 @@ The Local Command Agent is an opt-in foreground PowerShell process. It polls a s
 
 From the Shared CI Platform checkout:
 
-    pwsh -NoProfile -File .\scripts\Start-SharedCiLocalAgent.ps1 -MotionDeckRoot C:\Users\user\MotionDeckStudio\motiondeck-clean-validation -Ref security/workflow-gates-v1
+    pwsh -NoProfile -File .\scripts\Start-SharedCiLocalAgent.ps1 -MotionDeckRoot C:\Users\user\MotionDeckStudio\motiondeck-clean-validation -Ref security/workflow-gates-acl-v2
 
 The agent polls every 15 seconds. Press Ctrl+C to stop it. It is not installed as a service and does not start automatically with Windows.
 
