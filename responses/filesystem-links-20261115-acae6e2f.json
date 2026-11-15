@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "commandId": "filesystem-links-20261115-acae6e2f",
+  "task": "shared-ci.filesystem-links",
+  "status": "passed",
+  "exitCode": 0,
+  "timedOut": false,
+  "startedAt": "2026-11-15T11:02:44.9130893+03:30",
+  "finishedAt": "2026-11-15T11:02:45.4598760+03:30",
+  "durationSeconds": 0.392
+}
