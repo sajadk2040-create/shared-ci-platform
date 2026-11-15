@@ -4,7 +4,7 @@ param(
   [string]$MotionDeckRoot,
   [string]$SharedCiRoot = (Split-Path -Parent $PSScriptRoot),
   [string]$Repository = "sajadk2040-create/shared-ci-platform",
-  [ValidateSet("main", "feature/local-command-agent-v1", "security/metadata-only-local-agent-v1", "security/workflow-gates-acl-v2")]
+  [ValidateSet("main", "feature/local-command-agent-v1", "security/metadata-only-local-agent-v1", "security/workflow-gates-acl-v2", "security/report-path-redaction-v1")]
   [string]$Ref = "feature/local-command-agent-v1",
   [ValidateRange(5, 300)]
   [int]$PollSeconds = 15,
