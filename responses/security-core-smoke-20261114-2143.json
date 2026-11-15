@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "commandId": "security-core-smoke-20261114-2143",
+  "task": "shared-ci.core-smoke",
+  "status": "passed",
+  "exitCode": 0,
+  "timedOut": false,
+  "startedAt": "2026-11-14T21:42:59.8175995+03:30",
+  "finishedAt": "2026-11-14T21:43:09.2451504+03:30",
+  "durationSeconds": 9.295
+}

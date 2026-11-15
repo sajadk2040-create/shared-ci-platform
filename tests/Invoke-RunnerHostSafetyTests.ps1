@@ -7,6 +7,7 @@ $preflight = Join-Path $RepositoryRoot 'scripts/Test-RunnerHostReadiness.ps1'
 $provision = Join-Path $RepositoryRoot 'scripts/Prepare-SharedCiRunnerHost.ps1'
 $audit = Join-Path $RepositoryRoot 'scripts/Test-SharedCiRunnerIsolation.ps1'
 $aclHelper = Join-Path $RepositoryRoot 'scripts/SharedCiAclRules.ps1'
+$aclRulesSource = Get-Content -LiteralPath $aclHelper -Raw
 $linkIntegration = Join-Path $RepositoryRoot 'tests/Invoke-RunnerFilesystemLinkIntegrationTests.ps1'
 foreach ($path in @($preflight, $provision, $audit, $aclHelper, $linkIntegration)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Required script missing: $path" }
@@ -63,6 +64,7 @@ try {
     Assert-True ($plan.ExitCode -eq 0) ("plan-only invocation should succeed. Output: " + $plan.Output)
     Assert-True (-not (Test-Path -LiteralPath $target)) 'plan-only must not create runner directory'
     Assert-True ($plan.Output.Contains('"Mode": "Plan only"')) 'plan output must identify Plan only mode'
+    Assert-True ($plan.Output.Contains('"ParentAclAssessment"')) 'plan output must include read-only parent ACL assessment'
     $badName = Invoke-PwshCapture -Arguments @('-File',$provision,'-AccountName','invalid account','-RunnerRoot',$target)
     Assert-True ($badName.ExitCode -ne 0) 'invalid account name must be rejected'
     $badPath = Invoke-PwshCapture -Arguments @('-File',$provision,'-AccountName',$account,'-RunnerRoot',(Join-Path $testRoot 'inside-profile'))
@@ -79,6 +81,24 @@ try {
     Assert-True ($auditSource.Contains('$next = $parent.FullName')) 'ancestor traversal must preserve the volume-root path'
     Assert-True (-not $auditSource.Contains('$parent.FullName.TrimEnd')) 'ancestor traversal must not convert a volume root such as C:\\ into a drive-relative path'
     . $aclHelper
+    $missingParentForAcl = Join-Path $testRoot 'parent-does-not-exist'
+    $parentAssessment = Get-SharedCiParentAclAssessment -Path $missingParentForAcl
+    Assert-True (Test-SharedCiBroadPrincipalWriteRule -PrincipalSid 'S-1-5-11' -Rights ([Security.AccessControl.FileSystemRights]::Modify) -AccessControlType Allow) 'Authenticated Users Modify ACE must be classified as broad write access'
+    Assert-True (-not (Test-SharedCiBroadPrincipalWriteRule -PrincipalSid 'S-1-5-11' -Rights ([Security.AccessControl.FileSystemRights]::ReadAndExecute) -AccessControlType Allow)) 'Authenticated Users read-only ACE must not be classified as broad write access'
+    Assert-True (-not (Test-SharedCiBroadPrincipalWriteRule -PrincipalSid 'S-1-5-21-100-200-300-1001' -Rights ([Security.AccessControl.FileSystemRights]::FullControl) -AccessControlType Allow)) 'a non-broad principal must not be classified by the broad-principal predicate'
+    Assert-True (Test-SharedCiBroadPrincipalDeleteChildRule -PrincipalSid 'S-1-5-11' -Rights ([Security.AccessControl.FileSystemRights]::DeleteSubdirectoriesAndFiles) -AccessControlType Allow) 'broad-principal DeleteSubdirectoriesAndFiles on an ancestor must be rejected'
+    Assert-True (-not (Test-SharedCiBroadPrincipalDeleteChildRule -PrincipalSid 'S-1-5-11' -Rights ([Security.AccessControl.FileSystemRights]::CreateDirectories) -AccessControlType Allow)) 'ancestor CreateDirectories alone must not invalidate an already secured child directory'
+    Assert-True ($aclRulesSource.Contains('$acl.AreAccessRulesProtected')) 'parent ACL inspection must read the actual AreAccessRulesProtected state'
+    Assert-True ($aclRulesSource.Contains('-ParentAclProtected $parentAclProtected')) 'parent ACL safety decision must consume the actual inheritance-protection state'
+    Assert-True (Test-SharedCiParentAclState -ParentExists $true -ParentAclValid $true -ParentAclProtected $true -ReparsePointCount 0 -InspectionErrorCount 0 -AncestorDeleteChildCount 0) 'a present, exactly secured parent with protected inheritance and clean ancestors should pass'
+    Assert-True (-not (Test-SharedCiParentAclState -ParentExists $true -ParentAclValid $true -ParentAclProtected $false -ReparsePointCount 0 -InspectionErrorCount 0 -AncestorDeleteChildCount 0)) 'an otherwise exact parent ACL with inheritance not protected must fail closed'
+    Assert-True (-not (Test-SharedCiParentAclState -ParentExists $false -ParentAclValid $true -ParentAclProtected $true -ReparsePointCount 0 -InspectionErrorCount 0 -AncestorDeleteChildCount 0)) 'a missing parent must fail closed'
+    Assert-True (-not (Test-SharedCiParentAclState -ParentExists $true -ParentAclValid $false -ParentAclProtected $true -ReparsePointCount 0 -InspectionErrorCount 0 -AncestorDeleteChildCount 0)) 'an unexpected parent ACL must fail closed'
+    Assert-True (-not (Test-SharedCiParentAclState -ParentExists $true -ParentAclValid $true -ParentAclProtected $true -ReparsePointCount 1 -InspectionErrorCount 0 -AncestorDeleteChildCount 0)) 'a reparse-point ancestor must fail closed'
+    Assert-True (-not (Test-SharedCiParentAclState -ParentExists $true -ParentAclValid $true -ParentAclProtected $true -ReparsePointCount 0 -InspectionErrorCount 1 -AncestorDeleteChildCount 0)) 'an ACL inspection error must fail closed'
+    Assert-True (-not (Test-SharedCiParentAclState -ParentExists $true -ParentAclValid $true -ParentAclProtected $true -ReparsePointCount 0 -InspectionErrorCount 0 -AncestorDeleteChildCount 1)) 'broad ancestor DeleteSubdirectoriesAndFiles must fail closed'
+    Assert-True (-not $parentAssessment.ParentExists -and -not $parentAssessment.IsSafe) 'a missing dedicated parent must be reported unsafe without substituting the drive root'
+    Assert-True ($parentAssessment.ExistingAncestorChecked -eq $null) 'missing parent assessment must not silently fall back to a different directory'
     $normalAttributes = [IO.FileAttributes]::Directory
     $reparseAttributes = [IO.FileAttributes]::Directory -bor [IO.FileAttributes]::ReparsePoint
     Assert-True (-not (Test-SharedCiReparsePointAttributes -Attributes $normalAttributes)) 'ordinary directory attributes must not be classified as reparse points'
@@ -94,6 +114,15 @@ try {
         param([string]$Identity,[string]$Type='Allow',[string]$Rights='FullControl',[string]$Inheritance='ContainerInherit, ObjectInherit',[string]$Propagation='None',[bool]$Inherited=$false)
         [pscustomobject]@{ Identity=$Identity; AccessControlType=$Type; Rights=$Rights; InheritanceFlags=$Inheritance; PropagationFlags=$Propagation; IsInherited=$Inherited }
     }
+    $existingDirectoryRules = @(
+        (New-TestAclRule -Identity 'S-1-5-18' -Inherited $true),
+        (New-TestAclRule -Identity 'S-1-5-32-544' -Inherited $true)
+    )
+    $existingDirectoryAcl = Test-SharedCiExistingRunnerDirectoryState -DirectoryExists $true -IsReparsePoint $false -Rules $existingDirectoryRules -ExpectedIdentities @('S-1-5-18','S-1-5-32-544')
+    Assert-True $existingDirectoryAcl.IsSafe 'an existing directory with only inherited SYSTEM/Administrators FullControl ACEs should be reusable'
+    Assert-True (-not (Test-SharedCiExistingRunnerDirectoryState -DirectoryExists $true -IsReparsePoint $true -Rules $existingDirectoryRules -ExpectedIdentities @('S-1-5-18','S-1-5-32-544')).IsSafe) 'an existing reparse-point directory must not be reused'
+    Assert-True (-not (Test-SharedCiExistingRunnerDirectoryState -DirectoryExists $true -IsReparsePoint $false -Rules (@($existingDirectoryRules) + @(New-TestAclRule -Identity 'S-1-5-21-999' -Inherited $true)) -ExpectedIdentities @('S-1-5-18','S-1-5-32-544')).IsSafe) 'an existing directory with an extra ACE must not be reused'
+    Assert-True (-not (Test-SharedCiExistingRunnerDirectoryState -DirectoryExists $false -IsReparsePoint $false -Rules $existingDirectoryRules -ExpectedIdentities @('S-1-5-18','S-1-5-32-544')).IsSafe) 'a missing directory must not be treated as reusable'
     $validRules = @(
         (New-TestAclRule -Identity $expectedSids[0]),
         (New-TestAclRule -Identity $expectedSids[1]),
@@ -124,6 +153,14 @@ try {
     Assert-True ($source.Contains('Import-Module Microsoft.PowerShell.LocalAccounts -ErrorAction Stop')) 'Apply mode must explicitly load LocalAccounts module'
     Assert-True ($source.Contains('[Environment]::Is64BitProcess')) 'Apply mode must reject 32-bit PowerShell'
     Assert-True ($source.Contains('SetAccessRuleProtection($true, $false)')) 'directory ACL inheritance must be protected'
+    Assert-True ($source.Contains("-Description 'Shared CI runner account'")) 'local account description must stay within the Windows 48-character limit'
+    Assert-True ($source.Contains('Test-SharedCiExistingRunnerDirectoryState')) 'an existing partial directory must pass an exact inherited ACL and reparse-point assessment before reuse'
+    Assert-True ($source.Contains('if (-not $targetExists)')) 'a verified existing partial directory must not be recreated'
+    Assert-True ($source.Contains('Get-SharedCiParentAclAssessment -Path $parentPath')) 'provisioning must inspect the parent path and existing ancestors before Apply'
+    Assert-True ($source.Contains('ParentAclAssessment = $parentAclAssessment')) 'plan output must include the parent ACL assessment'
+    Assert-True ($source.Contains('if (-not $parentAclAssessment.IsSafe)')) 'Apply mode must fail closed when parent ACL assessment is unsafe'
+    Assert-True ($source.Contains('dedicated parent directory must exist before Apply')) 'Apply mode must never create an unreviewed parent directory'
+    Assert-True ($source.Contains("SharedCiAclRules.ps1")) 'provisioning must load the shared ACL helper'
     Assert-True (-not $source.Contains('ConvertFrom-SecureString')) 'password must not be serialized by the script'
     Assert-True (-not $source.Contains('ConvertTo-SecureString')) 'password must not be reconstructed from persisted text'
     Assert-True (-not $source.Contains('config.cmd')) 'provisioning must not register a runner'

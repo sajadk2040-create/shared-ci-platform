@@ -8,6 +8,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $requiredConfirmation = 'CREATE SHARED-CI SERVICE ACCOUNT AND ISOLATED DIRECTORY'
+. (Join-Path $PSScriptRoot 'SharedCiAclRules.ps1')
 function Test-IsAdministrator {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = [Security.Principal.WindowsPrincipal]::new($identity)
@@ -19,18 +20,34 @@ $targetRoot = [IO.Path]::GetFullPath($RunnerRoot).TrimEnd('\')
 $profileRoot = [IO.Path]::GetFullPath($env:USERPROFILE).TrimEnd('\')
 if ($targetRoot.StartsWith($profileRoot + '\', [StringComparison]::OrdinalIgnoreCase) -or $targetRoot.Equals($profileRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'RunnerRoot must be outside the current user profile.' }
 if ($targetRoot -notmatch '^[A-Za-z]:\\GitHubRunners\\[A-Za-z0-9_-]+$') { throw 'RunnerRoot must be directly under <drive>:\GitHubRunners\.' }
-if (Test-Path -LiteralPath $targetRoot) { throw "Target directory already exists; refusing to reuse or modify it: $targetRoot" }
-$parentPath = Split-Path -Parent $targetRoot
-if (Test-Path -LiteralPath $parentPath) {
-    $parentItem = Get-Item -LiteralPath $parentPath -Force
-    if (($parentItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'Parent directory is a reparse point; refusing to continue.' }
+$targetExists = Test-Path -LiteralPath $targetRoot
+if ($targetExists) {
+    $existingItem = Get-Item -LiteralPath $targetRoot -Force -ErrorAction Stop
+    $existingAcl = Get-Acl -LiteralPath $targetRoot -ErrorAction Stop
+    $existingRules = @($existingAcl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier]) | ForEach-Object {
+        [pscustomobject]@{
+            Identity = $_.IdentityReference.Value
+            AccessControlType = $_.AccessControlType.ToString()
+            Rights = $_.FileSystemRights.ToString()
+            InheritanceFlags = $_.InheritanceFlags.ToString()
+            PropagationFlags = $_.PropagationFlags.ToString()
+            IsInherited = [bool]$_.IsInherited
+        }
+    })
+    $existingDirectoryAssessment = Test-SharedCiExistingRunnerDirectoryState -DirectoryExists ($existingItem -is [IO.DirectoryInfo]) -IsReparsePoint (( $existingItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) -Rules $existingRules -ExpectedIdentities @('S-1-5-18','S-1-5-32-544')
+    if (-not $existingDirectoryAssessment.IsSafe) {
+        throw "Target directory exists but does not have the exact expected inherited SYSTEM/Administrators ACL, or is a reparse point. Refusing reuse: $targetRoot"
+    }
 }
+$parentPath = Split-Path -Parent $targetRoot
+$parentAclAssessment = Get-SharedCiParentAclAssessment -Path $parentPath
 $existing = Get-CimInstance -ClassName Win32_UserAccount -Filter "LocalAccount=True AND Name='$AccountName'" -ErrorAction Stop |
     Where-Object { $_.LocalAccount -and $_.Name -eq $AccountName }
 if ($null -ne $existing) { throw "Local account '$AccountName' already exists; refusing to modify an existing account." }
 [pscustomobject]@{
     AccountName = $AccountName
     RunnerRoot = $targetRoot
+    ParentAclAssessment = $parentAclAssessment
     ExistingAccountWillBeModified = $false
     ExistingRunnerWillBeModified = $false
     RunnerRegistration = 'Not performed'
@@ -44,6 +61,7 @@ if (-not $Apply) {
 }
 if (-not [Environment]::Is64BitProcess) { throw 'Apply mode requires 64-bit PowerShell 7 because the Windows LocalAccounts module is not supported in 32-bit PowerShell.' }
 if (-not (Test-IsAdministrator)) { throw 'Run this script from an elevated 64-bit PowerShell 7 session.' }
+if (-not $parentAclAssessment.IsSafe) { throw 'Runner parent path failed the read-only ACL/reparse-point preflight. Review ParentAclAssessment before provisioning.' }
 Import-Module Microsoft.PowerShell.LocalAccounts -ErrorAction Stop
 if ($ConfirmationText -cne $requiredConfirmation) { throw "Explicit confirmation required. Supply -ConfirmationText exactly: $requiredConfirmation" }
 if (-not $PSCmdlet.ShouldProcess("$AccountName and $targetRoot", 'Create standard local account and isolated directory')) { throw 'Provisioning was not approved by ShouldProcess.' }
@@ -53,10 +71,12 @@ $createdDirectory = $false
 try {
     $password = Read-Host "Enter a strong password for local account $AccountName" -AsSecureString
     if ($null -eq $password -or $password.Length -lt 16) { throw 'Password must contain at least 16 characters.' }
-    if (-not (Test-Path -LiteralPath $parentPath -PathType Container)) { New-Item -Path $parentPath -ItemType Directory -Force | Out-Null }
-    New-Item -Path $targetRoot -ItemType Directory -ErrorAction Stop | Out-Null
-    $createdDirectory = $true
-    $user = New-LocalUser -Name $AccountName -Password $password -Description 'Dedicated least-privilege account for Shared CI Platform runner; not yet registered.'
+    if (-not (Test-Path -LiteralPath $parentPath -PathType Container)) { throw 'The dedicated parent directory must exist before Apply. Create and secure it manually as an administrator, then rerun the read-only preflight.' }
+    if (-not $targetExists) {
+        New-Item -Path $targetRoot -ItemType Directory -ErrorAction Stop | Out-Null
+        $createdDirectory = $true
+    }
+    $user = New-LocalUser -Name $AccountName -Password $password -Description 'Shared CI runner account'
     $createdAccount = $true
     $administratorsSid = [Security.Principal.SecurityIdentifier]::new('S-1-5-32-544')
     $systemSid = [Security.Principal.SecurityIdentifier]::new('S-1-5-18')
