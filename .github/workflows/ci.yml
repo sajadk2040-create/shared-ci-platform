@@ -1,0 +1,86 @@
+name: Shared CI (self-check)
+
+# Runs the platform's own validation suites on the repository's dedicated
+# self-hosted Windows runner. Deliberately NOT triggered by pull_request:
+# untrusted fork code must never execute on a persistent self-hosted runner.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - 'ci/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shared-ci-self-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  self-check:
+    name: validate-runner-and-suites
+    # Defence in depth: only ever run code that lives in this repository.
+    if: github.event.repository.full_name == github.repository
+    runs-on: [self-hosted, Windows, X64, shared-ci]
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Verify PowerShell 7
+        shell: pwsh
+        run: |
+          $PSVersionTable | Out-String | Write-Host
+          if ($PSVersionTable.PSVersion.Major -lt 7) {
+            throw 'PowerShell 7 or newer is required.'
+          }
+
+      - name: Core runner smoke suite
+        shell: pwsh
+        run: pwsh -NoProfile -File tests/Invoke-RunnerSmokeTests.ps1
+
+      - name: Runner host safety suite
+        shell: pwsh
+        run: pwsh -NoProfile -File tests/Invoke-RunnerHostSafetyTests.ps1
+
+      - name: Real Windows filesystem links (opt-in)
+        shell: pwsh
+        continue-on-error: true
+        run: pwsh -NoProfile -File tests/Invoke-RunnerFilesystemLinkIntegrationTests.ps1 -EnableFilesystemLinkTests
+
+      - name: Run smoke project config (success fixture)
+        shell: pwsh
+        working-directory: examples/smoke-project
+        run: pwsh -NoProfile -File ../../scripts/run.ps1 -ConfigPath ci.project.json
+
+      - name: Run smoke project config (intentional failure fixture must exit non-zero)
+        shell: pwsh
+        working-directory: examples/smoke-project
+        run: |
+          pwsh -NoProfile -File ../../scripts/run.ps1 -ConfigPath ci.project.expected-failure.json
+          if ($LASTEXITCODE -eq 0) {
+            throw 'The intentional failure fixture was expected to exit non-zero but exited 0.'
+          }
+          Write-Host "Intentional failure fixture exited with $LASTEXITCODE as expected."
+          exit 0
+
+      - name: Consumer template tests (opt-in)
+        shell: pwsh
+        continue-on-error: true
+        run: pwsh -NoProfile -File tests/Invoke-ConsumerTemplateTests.ps1
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/**
+            examples/smoke-project/artifacts/**
+          if-no-files-found: warn
+          retention-days: 7
