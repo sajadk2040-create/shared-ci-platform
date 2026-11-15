@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "commandId": "motiondeck-repo-validation-20261115-01",
+  "task": "motiondeck.repository-validation",
+  "status": "passed",
+  "exitCode": 0,
+  "timedOut": false,
+  "startedAt": "2026-11-15T11:22:51.2892371+03:30",
+  "finishedAt": "2026-11-15T11:22:51.7892655+03:30",
+  "durationSeconds": 0.344
+}
