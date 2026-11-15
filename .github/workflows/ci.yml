@@ -7,9 +7,13 @@ name: Shared CI (self-check)
 on:
   workflow_dispatch:
   push:
+    # Same-repository branches only. pull_request is intentionally absent so
+    # untrusted fork code can never reach this persistent self-hosted runner.
     branches:
       - main
       - 'ci/**'
+      - 'feature/**'
+      - 'security/**'
 
 permissions:
   contents: read
