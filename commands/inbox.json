@@ -1,4 +1,9 @@
 {
   "schemaVersion": 1,
-  "command": null
+  "command": {
+    "issuedAt": "2026-11-15T07:42:55.5116812+00:00",
+    "expiresAt": "2026-11-15T08:02:55.5116812+00:00",
+    "id": "consumer-template-20261115-01",
+    "task": "shared-ci.consumer-template"
+  }
 }
