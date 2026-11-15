@@ -96,11 +96,17 @@ try {
   Assert-True ($passReport.status -eq "passed") "success report status should be passed"
   Assert-True ($passReport.steps[0].exitCode -eq 0) "success step exit code should be 0"
   Assert-True ($passReport.steps[0].argumentCount -eq 10) "report should record argument count without raw argument values"
+  Assert-True ($passReport.steps[0].command -eq [System.IO.Path]::GetFileName($pwshPath)) "report should contain only the executable name, not its absolute path"
+  Assert-True ($passReport.steps[0].workingDirectory -eq ".") "project-root working directory should be reported as a relative dot path"
   $serializedReport = Get-Content -LiteralPath $jsonReport.FullName -Raw
   Assert-True (-not $serializedReport.Contains("value with spaces")) "report must not expose raw process arguments"
+  Assert-True (-not $serializedReport.Contains($projectRoot)) "report must not expose the machine-specific project root"
+  Assert-True (-not $serializedReport.Contains($pwshPath)) "report must not expose the absolute executable path"
   $runLog = Get-ChildItem -LiteralPath $passReports -Filter "*.log" | Select-Object -First 1
   $logContent = Get-Content -LiteralPath $runLog.FullName -Raw
   Assert-True (-not $logContent.Contains("value with spaces")) "execution log must not expose raw process arguments"
+  Assert-True (-not $logContent.Contains($projectRoot)) "execution log must not expose the machine-specific project root"
+  Assert-True (-not $logContent.Contains($pwshPath)) "execution log must not expose the absolute executable path"
   Assert-True ((Get-ChildItem -LiteralPath $passReports -Filter "*.md").Count -eq 1) "Markdown report should exist"
   Assert-True ((Get-ChildItem -LiteralPath $passReports -Filter "*.log").Count -eq 1) "execution log should exist"
   $stdoutFile = Join-Path $passReports $passReport.steps[0].stdout
