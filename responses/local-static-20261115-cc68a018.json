@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "commandId": "local-static-20261115-cc68a018",
+  "task": "shared-ci.local-agent-static",
+  "status": "passed",
+  "exitCode": 0,
+  "timedOut": false,
+  "startedAt": "2026-11-15T10:59:51.7869358+03:30",
+  "finishedAt": "2026-11-15T10:59:52.3210455+03:30",
+  "durationSeconds": 0.376
+}
