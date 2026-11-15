@@ -11,7 +11,8 @@ $templateRoot = Join-Path $RepositoryRoot 'examples/consumer-template'
 $configPath = Join-Path $templateRoot 'ci.project.example.json'
 $smokePath = Join-Path $templateRoot 'scripts/ci-smoke.ps1'
 $workflowPath = Join-Path $templateRoot '.github/workflows/shared-ci.yml.example'
-foreach ($path in @($configPath, $smokePath, $workflowPath)) {
+$reusableWorkflowPath = Join-Path $RepositoryRoot '.github/workflows/reusable.yml'
+foreach ($path in @($configPath, $smokePath, $workflowPath, $reusableWorkflowPath)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Required consumer template file missing: $path" }
 }
 
@@ -46,4 +47,13 @@ Assert-True ($workflow -match '(?m)^\s*workflow_dispatch:\s*$') 'workflow must b
 Assert-True ($workflow -notmatch '(?m)^\s*(pull_request|push):') 'workflow must not enable push or pull_request triggers by default'
 Assert-True ($workflow -match '(?m)^\s*contents:\s*read\s*$') 'workflow must use read-only contents permission'
 Write-Host 'PASS: consumer workflow pin and trigger safety'
-Write-Host 'PASS: consumer template tests (3 groups)'
+
+$reusable = Get-Content -LiteralPath $reusableWorkflowPath -Raw
+Assert-True ($reusable -match "github\.event_name\s*==\s*'workflow_dispatch'") 'reusable workflow must reject non-manual caller events'
+Assert-True ($reusable -match 'github\.ref_protected\s*==\s*true') 'reusable workflow must require a protected caller ref'
+Assert-True ($reusable -match "PLATFORM_REF\s+-notmatch\s+'\^\[0-9a-fA-F\]\{40\}\$'") 'reusable workflow must validate a full 40-character SHA before checkout'
+Assert-True ([regex]::Matches($reusable, '(?m)^\s*uses:\s*actions/checkout@[0-9a-f]{40}\s+# v[0-9.]+\s*$').Count -eq 2) 'both checkout actions must be pinned to full commit SHAs'
+Assert-True ($reusable -match '(?m)^\s*uses:\s*actions/upload-artifact@[0-9a-f]{40}\s+# v[0-9.]+\s*$') 'artifact action must be pinned to a full commit SHA'
+Assert-True ($reusable -match '(?m)^\s*retention-days:\s*3\s*$') 'report artifact retention must be limited to three days'
+Write-Host 'PASS: reusable workflow event, branch, SHA, action-pin and artifact-retention gates'
+Write-Host 'PASS: consumer template tests (4 groups)'
