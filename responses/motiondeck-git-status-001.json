@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "commandId": "motiondeck-git-status-001",
+  "task": "motiondeck.git-status",
+  "status": "passed",
+  "exitCode": 0,
+  "timedOut": false,
+  "startedAt": "2026-11-14T20:41:43.1037722+03:30",
+  "finishedAt": "2026-11-14T20:41:43.2858816+03:30",
+  "durationSeconds": 0.048,
+  "stdout": "## main...origin/main\n",
+  "stderr": ""
+}

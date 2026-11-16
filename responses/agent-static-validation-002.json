@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "commandId": "agent-static-validation-002",
+  "task": "shared-ci.local-agent-static",
+  "status": "failed",
+  "exitCode": 1,
+  "timedOut": false,
+  "startedAt": "2026-11-14T20:36:30.7024578+03:30",
+  "finishedAt": "2026-11-14T20:36:31.1749866+03:30",
+  "durationSeconds": 0.337,
+  "stdout": "",
+  "stderr": "\u001b[31;1mParserError: \u001b[0mC:\\Users\\user\\MotionDeckStudio\\shared-ci-platform\\tests\\Invoke-LocalAgentStaticTests.ps1:40\u001b[0m\r\n\u001b[31;1m\u001b[0m\u001b[36;1mLine |\u001b[0m\r\n\u001b[31;1m\u001b[0m\u001b[36;1m\u001b[36;1m  40 | \u001b[0m . task -match \u001b[36;1m'^(motiondeck\\.(repository-validation|git-status|current-\u001b[0m .\u001b[0m\r\n\u001b[31;1m\u001b[0m\u001b[36;1m\u001b[36;1m\u001b[0m\u001b[36;1m\u001b[0m\u001b[36;1m     | \u001b[31;1m               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\r\n\u001b[31;1m\u001b[0m\u001b[36;1m\u001b[36;1m\u001b[0m\u001b[36;1m\u001b[0m\u001b[36;1m\u001b[31;1m\u001b[31;1m\u001b[36;1m     | \u001b[31;1mThe string is missing the terminator: '.\u001b[0m\r\n"
+}

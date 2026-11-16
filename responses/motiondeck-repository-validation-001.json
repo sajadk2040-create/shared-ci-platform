@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "commandId": "motiondeck-repository-validation-001",
+  "task": "motiondeck.repository-validation",
+  "status": "passed",
+  "exitCode": 0,
+  "timedOut": false,
+  "startedAt": "2026-11-14T20:39:50.4271084+03:30",
+  "finishedAt": "2026-11-14T20:39:50.8915984+03:30",
+  "durationSeconds": 0.331,
+  "stdout": "PASS: consumer integration structure (4 required files)\r\nPASS: MotionDeck project config contract smoke checks\r\nPASS: canonical reusable workflow pinned to 19b58b1304f372f6dc038c5e7f32f7810c91d37f\r\nPASS: workflow is manual-only and excludes automatic push/pull_request triggers\r\nINFO: reusable workflow also runs real Windows junction/symbolic-link integration checks\r\n",
+  "stderr": ""
+}
