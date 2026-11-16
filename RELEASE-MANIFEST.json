@@ -11,6 +11,6 @@
   "entrypoint": "scripts/run.ps1",
   "sourceStagingPath": ".",
   "intendedRepository": "sajadk2040-create/shared-ci-platform",
-  "releaseStatus": "runner-suites-validated-on-self-hosted-windows-ci-release-gates-pending",
+  "releaseStatus": "release-gates-1-2-4-5-6-met-runner-service-isolation-and-consumer-review-pending",
   "repository": "https://github.com/sajadk2040-create/shared-ci-platform"
 }

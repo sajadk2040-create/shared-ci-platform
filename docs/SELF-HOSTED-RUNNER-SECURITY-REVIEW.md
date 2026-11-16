@@ -13,7 +13,8 @@ No registration, workflow dispatch, service installation, account creation, perm
 The review was read-only and used Windows management metadata; runner credential files were not opened or copied.
 
 - Host: Windows 11 Pro, x64.
-- The configured runner is under `C:\Users\user\MotionDeckStudio\actions-runner\runner` (a nested runner root).
+- The previously configured runner lives under a nested `actions-runner\runner` directory inside a developer user profile (
+  the exact machine-specific path is deliberately not recorded in this repository).
 - Its non-secret `.runner` metadata identifies the target repository as `sajadk2040-create/nti-national-traffic-intelligence`, with runner name `BR-GHAZANFARI` and work folder `_work`.
 - A `Runner.Listener.exe run` process was active and responding. Its parent chain shows it was launched by `run.cmd` from an interactive PowerShell/Explorer session on 2026-11-12.
 - No Windows service matching the GitHub Actions runner was found. The listener is therefore not currently running as an installed Windows service.
