@@ -29,13 +29,17 @@ The harness is a local runner test. It does not validate the GitHub reusable wor
 
 ## Release gates
 
-Do not publish `v0.1.0` until all of the following are complete:
-- The expanded local PowerShell 7 smoke harness passes on the release candidate.
-- The reusable workflow YAML is parsed and reviewed.
-- A dedicated least-privilege self-hosted runner is provisioned, isolated and security-reviewed.
-- A manual workflow run succeeds on that runner using a reviewed platform commit.
-- Artifact upload is verified and reviewed for secret leakage.
-- The release artifact contains no secrets or machine-specific paths.
-- MotionDeck's consumer config/workflow is reviewed and uses the versioned platform reference.
+`v0.1.0` was published on 2026-11-16 only after the following were complete:
 
-The current `0.1.0` manifest remains a bootstrap target, not a published production release. No release tag exists until these gates pass.
+| # | Gate | Status | Evidence |
+|---|---|---|---|
+| 1 | The expanded local PowerShell 7 smoke harness passes on the release candidate. | met | `tests/Invoke-RunnerSmokeTests.ps1`, eight groups, green on every self-hosted run |
+| 2 | The reusable workflow YAML is parsed and reviewed. | met | `tests/Invoke-RunnerHostSafetyTests.ps1`, five groups |
+| 3 | A dedicated least-privilege self-hosted runner is provisioned, isolated and security-reviewed. | partially met | both runners are Windows services on a dedicated host, but they run as `SYSTEM` / `NETWORK SERVICE`; the dedicated `svc-shared-ci` account is still pending |
+| 4 | A manual workflow run succeeds on that runner using a reviewed platform commit. | met | run `43766141459` (manual dispatch, `main` @ `7e1c8bc`) |
+| 5 | Artifact upload is verified and reviewed for secret leakage. | met | run `43766608260`, 10 files, 0 token-like matches |
+| 6 | The release artifact contains no secrets or machine-specific paths. | met | PR #10 redaction; re-inspection found 0 `C:\`, `GitHubRunners` or `_work` fragments |
+| 7 | MotionDeck's consumer config/workflow is reviewed and uses the versioned platform reference. | met | tag `v0.1.0` at `62a28e7`, consumer run `43832199370` green at `reusable.yml@v0.1.0` |
+
+Gate 3 stays open as post-release hardening: reducing the runner services to a dedicated machine account
+changes host ACLs and service identities, so it is tracked separately and does not block the `0.1.0` release.

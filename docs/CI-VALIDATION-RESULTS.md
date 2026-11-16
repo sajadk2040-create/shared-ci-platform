@@ -103,17 +103,49 @@ Re-inspection of the artifact uploaded by run `43766608260` (after the fix):
 | Files in artifact | 10 report files |
 | Sampled report values | `"command": "pwsh"`, `"workingDirectory": "."` |
 
+## Consumer validation and the v0.1.0 release tag
+
+The consumer repository `sajadk2040-create/motiondeck-studio` was used as the end-to-end proof that the
+platform works for a real caller, on its own runner (`win-docker-md-01`, service
+`actions.runner.sajadk2040-create-motiondeck-studio.win-docker-md-01`, `NT AUTHORITY\NETWORK SERVICE`).
+
+| Run | Consumer ref used | Result |
+|---|---|---|
+| [43831550721](https://github.com/sajadk2040-create/motiondeck-studio/actions/runs/43831550721) | reusable workflow + `platform-ref` at bare SHA `19b58b1` (17 commits behind `main`) | **success** - 12/12 steps, including the real Windows filesystem-link test and the caller's own `ci.project.json` step |
+| [43831918116](https://github.com/sajadk2040-create/motiondeck-studio/actions/runs/43831918116) | reusable workflow at `v0.1.0`, `platform-ref` at `62a28e7` | **failure** - expected, see below |
+| [43832199370](https://github.com/sajadk2040-create/motiondeck-studio/actions/runs/43832199370) | reusable workflow at `v0.1.0`, `platform-ref` at `62a28e7` | **success** - 12/12 steps |
+
+Run `43831918116` is the interesting one: the platform side was fine, but the consumer's own contract test
+(`scripts/Test-MotionDeckRepository.ps1`) rejected the tag reference outright:
+
+```
+Consumer workflow must reference the canonical reusable workflow at a full immutable commit SHA.
+```
+
+Two requirements were in direct conflict - the release gate asks for a *versioned* platform reference, the
+consumer test demanded a *bare SHA*. The resolution keeps both properties (MotionDeck PR #4):
+
+- the reusable workflow may be referenced by a released tag (`v<major>.<minor>.<patch>`) **or** a full SHA;
+- `platform-ref` must still be a full 40-character commit SHA - that is the ref the reusable workflow
+  actually checks out and executes, so the code that runs cannot drift from the recorded revision even if
+  the tag is moved later.
+
+## Release tag
+
+`v0.1.0` is an annotated tag on `main` commit `62a28e7e17b7482d6f2ba29b2b683a8cca6387f9` (PR #11), published
+on 2026-11-16 after run `43832199370` came back green at that tag. Consumers should pin
+`uses: .../reusable.yml@v0.1.0` together with `platform-ref: 62a28e7e17b7482d6f2ba29b2b683a8cca6387f9`.
+
 ## Still outstanding
 
-1. The runner currently starts from `run.cmd` (interactive window or an `AtStartup` scheduled task), not from a
-   Windows service. Installing it as a service requires `config.cmd remove` followed by a reconfigure with
-   `--runasservice`, because the flag is only accepted at configuration time.
-2. `main` branch protection is enabled (required check `validate-runner-and-suites`, one approving review,
+1. `main` branch protection is enabled (required check `validate-runner-and-suites`, one approving review,
    force pushes and deletions blocked) with `enforce_admins` off, so the sole repository admin can still bypass
    it. Revisit once a second maintainer exists.
-3. The stacked security pull requests (`#1`, `#2`, `#5`, `#6`) are still draft and unmerged.
-4. No `v0.1.0` tag exists, so consumers cannot pin `platform-ref`.
-5. `actions/checkout@v4` and `actions/upload-artifact@v4` emit a Node.js 20 deprecation warning; a future
+2. The stacked security pull requests (`#1`, `#2`, `#5`, `#6`) are still draft and unmerged.
+3. The runners execute as `SYSTEM` (`win-docker-01`) and `NT AUTHORITY\NETWORK SERVICE` (`win-docker-md-01`).
+   The dedicated `svc-shared-ci` service account path in `docs/RUNNER-HOST-PROVISIONING.md` has not been
+   applied yet. This is release gate 3 and remains future hardening rather than a v0.1.0 blocker.
+4. `actions/checkout@v4` and `actions/upload-artifact@v4` emit a Node.js 20 deprecation warning; a future
    bump to `@v5` is recommended.
-6. The runner executes as the installing account or `SYSTEM`; the dedicated `svc-shared-ci` service account
-   path in `docs/RUNNER-HOST-PROVISIONING.md` has not been applied.
+5. The consumer workflow is still `workflow_dispatch`-only. Enabling `push`/`pull_request` triggers requires
+   the dedicated runner security gates to pass first.
