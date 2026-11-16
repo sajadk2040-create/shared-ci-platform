@@ -11,6 +11,9 @@
   "entrypoint": "scripts/run.ps1",
   "sourceStagingPath": ".",
   "intendedRepository": "sajadk2040-create/shared-ci-platform",
-  "releaseStatus": "release-gates-1-2-4-5-6-met-runner-service-isolation-and-consumer-review-pending",
-  "repository": "https://github.com/sajadk2040-create/shared-ci-platform"
+  "releaseStatus": "v0.1.0-released-2026-11-16-release-gates-1-2-4-5-6-7-met-runner-service-isolation-and-stacked-hardening-pending",
+  "repository": "https://github.com/sajadk2040-create/shared-ci-platform",
+  "releaseTag": "v0.1.0",
+  "releaseCommit": "62a28e7e17b7482d6f2ba29b2b683a8cca6387f9",
+  "releasedAt": "2026-11-16"
 }
