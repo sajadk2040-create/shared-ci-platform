@@ -1,0 +1,65 @@
+name: Runner provisioning (dispatch only)
+
+# Temporary ops workflow used to provision self-hosted runners for the
+# repositories that lost GitHub-hosted CI minutes. Dispatch only, contents: read.
+# It prints host facts; it never prints credentials.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: inspect | services
+        required: true
+        default: inspect
+
+permissions:
+  contents: read
+
+jobs:
+  ops:
+    runs-on: [self-hosted, Windows, X64, shared-ci]
+    timeout-minutes: 10
+    steps:
+      - name: Host facts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Continue'
+          Write-Host "MODE: ${{ inputs.mode }}"
+          Write-Host "WHOAMI: $(whoami)"
+          Write-Host "OS64: $([Environment]::Is64BitOperatingSystem) PROC64: $([Environment]::Is64BitProcess)"
+
+          Write-Host "=== C:\GitHubRunners directories ==="
+          Get-ChildItem 'C:\GitHubRunners' -Directory -ErrorAction SilentlyContinue |
+            Select-Object -ExpandProperty Name
+
+          Write-Host "=== registered runner configs (.runner files) ==="
+          Get-ChildItem 'C:\GitHubRunners' -Recurse -Depth 3 -Filter '.runner' -Force -ErrorAction SilentlyContinue |
+            ForEach-Object {
+              try {
+                $cfg = Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json
+                '{0} -> {1} (agentId {2}, name {3})' -f $_.DirectoryName, $cfg.gitHubUrl, $cfg.agentId, $cfg.agentName
+              } catch {
+                '{0} -> unreadable' -f $_.DirectoryName
+              }
+            }
+
+          Write-Host "=== runner windows services ==="
+          Get-CimInstance Win32_Service -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -like 'actions.runner.*' } |
+            ForEach-Object { '{0} | state={1} | account={2} | start={3}' -f $_.Name, $_.State, $_.StartName, $_.StartMode }
+
+          Write-Host "=== other candidate runner dirs ==="
+          foreach ($p in @('C:\actions-runner','C:\runner','C:\GitHubRunners\nti','C:\GitHubRunners\bazaar')) {
+            if (Test-Path -LiteralPath $p) { "exists: $p" } else { "absent: $p" }
+          }
+
+          Write-Host "=== free memory / disk ==="
+          $os = Get-CimInstance Win32_OperatingSystem
+          'FreeMemGB: {0:N1}' -f ($os.FreePhysicalMemory / 1MB)
+          Get-PSDrive C | ForEach-Object { 'FreeDiskGB: {0:N1}' -f ($_.Free / 1GB) }
+
+          Write-Host "=== node / pwsh availability ==="
+          foreach ($exe in @('node','npm','git','pwsh')) {
+            $c = Get-Command $exe -ErrorAction SilentlyContinue
+            if ($c) { "{0}: {1}" -f $exe, $c.Source } else { "{0}: MISSING" -f $exe }
+          }
