@@ -1,16 +1,34 @@
 name: Runner provisioning (dispatch only)
 
-# Temporary ops workflow used to provision self-hosted runners for the
-# repositories that lost GitHub-hosted CI minutes. Dispatch only, contents: read.
-# It prints host facts; it never prints credentials.
+# Temporary ops workflow for provisioning self-hosted runners, because the
+# account has exhausted its GitHub-hosted Actions minutes.
+#
+# Dispatch only, contents: read. The registration token arrives as a repository
+# secret (masked, never echoed) and is consumed once by config.cmd.
 
 on:
   workflow_dispatch:
     inputs:
       mode:
-        description: inspect | services
+        description: inspect | provision
         required: true
         default: inspect
+      target_repo:
+        description: owner/repo to register the runner against (provision)
+        required: false
+        default: ''
+      runner_name:
+        description: runner name, e.g. win-docker-nti-01 (provision)
+        required: false
+        default: ''
+      runner_root:
+        description: runner root, e.g. C:\GitHubRunners\nti (provision)
+        required: false
+        default: ''
+      labels:
+        description: comma separated labels
+        required: false
+        default: 'self-hosted,Windows,X64,shared-ci'
 
 permissions:
   contents: read
@@ -18,48 +36,69 @@ permissions:
 jobs:
   ops:
     runs-on: [self-hosted, Windows, X64, shared-ci]
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
-      - name: Host facts
+      - name: Provision runner
+        if: inputs.mode == 'provision'
         shell: pwsh
+        env:
+          RUNNER_TOKEN: ${{ secrets.RUNNER_REG_TOKEN }}
         run: |
-          $ErrorActionPreference = 'Continue'
-          Write-Host "MODE: ${{ inputs.mode }}"
-          Write-Host "WHOAMI: $(whoami)"
-          Write-Host "OS64: $([Environment]::Is64BitOperatingSystem) PROC64: $([Environment]::Is64BitProcess)"
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:RUNNER_TOKEN)) { throw 'RUNNER_REG_TOKEN secret is not set.' }
+          Write-Host "::add-mask::$env:RUNNER_TOKEN"
 
-          Write-Host "=== C:\GitHubRunners directories ==="
-          Get-ChildItem 'C:\GitHubRunners' -Directory -ErrorAction SilentlyContinue |
-            Select-Object -ExpandProperty Name
+          $repo   = '${{ inputs.target_repo }}'
+          $name   = '${{ inputs.runner_name }}'
+          $root   = '${{ inputs.runner_root }}'
+          $labels = '${{ inputs.labels }}'
+          foreach ($pair in @(@('target_repo',$repo), @('runner_name',$name), @('runner_root',$root))) {
+            if ([string]::IsNullOrWhiteSpace($pair[1])) { throw ("input {0} is required" -f $pair[0]) }
+          }
+          if ($repo -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') { throw 'target_repo must be owner/repo' }
 
-          Write-Host "=== registered runner configs (.runner files) ==="
-          Get-ChildItem 'C:\GitHubRunners' -Recurse -Depth 3 -Filter '.runner' -Force -ErrorAction SilentlyContinue |
-            ForEach-Object {
-              try {
-                $cfg = Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json
-                '{0} -> {1} (agentId {2}, name {3})' -f $_.DirectoryName, $cfg.gitHubUrl, $cfg.agentId, $cfg.agentName
-              } catch {
-                '{0} -> unreadable' -f $_.DirectoryName
-              }
-            }
+          Write-Host "PROVISION: $repo as $name at $root"
 
-          Write-Host "=== runner windows services ==="
-          Get-CimInstance Win32_Service -ErrorAction SilentlyContinue |
-            Where-Object { $_.Name -like 'actions.runner.*' } |
+          New-Item -ItemType Directory -Path $root -Force | Out-Null
+
+          $source = 'C:\GitHubRunners\shared-ci'
+          $excludeFiles = @('.runner', '.credentials', '.credentials_rsaparams', '.env', '.path', '.service')
+          $excludeDirs  = @('_work', '_diag')
+          Get-ChildItem -LiteralPath $source -Force | Where-Object {
+            ($_.PSIsContainer -and ($excludeDirs -notcontains $_.Name)) -or
+            (-not $_.PSIsContainer -and ($excludeFiles -notcontains $_.Name))
+          } | ForEach-Object {
+            Copy-Item -LiteralPath $_.FullName -Destination $root -Recurse -Force
+          }
+
+          if (-not (Test-Path -LiteralPath (Join-Path $root 'config.cmd'))) { throw 'config.cmd not found after copy' }
+
+          Push-Location $root
+          try {
+            & .\config.cmd --unattended --replace --url "https://github.com/$repo" --token $env:RUNNER_TOKEN --name $name --labels $labels --work _work --runasservice 2>&1 | ForEach-Object { $_ -replace [regex]::Escape($env:RUNNER_TOKEN), '***' }
+            $exit = $LASTEXITCODE
+          } finally {
+            Pop-Location
+          }
+          Write-Host "config.cmd exit: $exit"
+
+          Write-Host '=== runner config written ==='
+          $cfg = Get-Content -LiteralPath (Join-Path $root '.runner') -Raw | ConvertFrom-Json
+          '{0} -> {1} (agentId {2}, name {3})' -f $root, $cfg.gitHubUrl, $cfg.agentId, $cfg.agentName
+
+          Write-Host '=== service state ==='
+          Get-CimInstance Win32_Service | Where-Object { $_.Name -like 'actions.runner.*' } |
             ForEach-Object { '{0} | state={1} | account={2} | start={3}' -f $_.Name, $_.State, $_.StartName, $_.StartMode }
 
-          Write-Host "=== other candidate runner dirs ==="
-          foreach ($p in @('C:\actions-runner','C:\runner','C:\GitHubRunners\nti','C:\GitHubRunners\bazaar')) {
-            if (Test-Path -LiteralPath $p) { "exists: $p" } else { "absent: $p" }
-          }
+          if ($exit -ne 0) { throw "config.cmd failed with exit $exit" }
 
-          Write-Host "=== free memory / disk ==="
+      - name: Inspect host
+        if: inputs.mode == 'inspect'
+        shell: pwsh
+        run: |
+          Write-Host "WHOAMI: $(whoami)"
+          Get-ChildItem 'C:\GitHubRunners' -Directory -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name
+          Get-CimInstance Win32_Service | Where-Object { $_.Name -like 'actions.runner.*' } |
+            ForEach-Object { '{0} | state={1} | account={2}' -f $_.Name, $_.State, $_.StartName }
           $os = Get-CimInstance Win32_OperatingSystem
           'FreeMemGB: {0:N1}' -f ($os.FreePhysicalMemory / 1MB)
-          Get-PSDrive C | ForEach-Object { 'FreeDiskGB: {0:N1}' -f ($_.Free / 1GB) }
-
-          Write-Host "=== node / pwsh availability ==="
-          foreach ($exe in @('node','npm','git','pwsh')) {
-            $c = Get-Command $exe -ErrorAction SilentlyContinue
-            if ($c) { "{0}: {1}" -f $exe, $c.Source } else { "{0}: MISSING" -f $exe }
-          }
